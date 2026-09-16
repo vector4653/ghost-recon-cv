@@ -19,8 +19,10 @@ model = Network(imagenet_pretrained=False)
 # 2. Map NVIDIA-trained weights to CPU first to prevent the Pickle error
 model.load_state_dict(torch.load(opt.pth_path, map_location='cpu'))
 
-# 3. Move the model to Apple Silicon Metal Performance Shaders
-model.to('mps')
+# 3. Select device (CUDA on Windows RTX 4050, MPS on Apple Silicon, or CPU)
+device = torch.device('cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu'))
+print(f"Using device: {device}")
+model.to(device)
 model.eval()
 
 # 4. Point directly to your standardized Military split
@@ -39,8 +41,8 @@ for i in range(test_loader.size):
     gt = np.asarray(gt, np.float32)
     gt /= (gt.max() + 1e-8)
     
-  # 5. Move the image tensors to MPS
-    image = image.to('mps')
+    # 5. Move the image tensors to device
+    image = image.to(device)
     
     # Forward pass: Unpack the 4 multi-scale outputs
     res5, res4, res3, res2 = model(image)

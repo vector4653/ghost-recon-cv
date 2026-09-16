@@ -6,6 +6,7 @@ Formatted Datsets/
 Formated Datasets/
 Formatted Datasets/
 Datasets/
+Dataset/
 datasets/
 dataset/
 data/
@@ -71,6 +72,7 @@ processed_data/
 checkpoints/
 weights/
 saved_models/
+snapshot/
 
 # ==============================================================================
 # Training, Experiment Logs and Visualizations
@@ -85,6 +87,7 @@ mlruns/
 output/
 outputs/
 results/
+res/
 
 
 # ==============================================================================
@@ -101,7 +104,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ (uncommented to track model architecture modules lib/Network_Res2Net_GRA_NCD.py etc)
 lib64/
 parts/
 sdist/

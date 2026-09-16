@@ -54,17 +54,21 @@ This project investigates military camouflaged target segmentation using deep le
 ### 🔹 Phase 1: Environment & Codebase Alignment (RTX 4050 Setup)
 **Objective**: Prepare the Windows 11 / RTX 4050 (6GB VRAM) environment for GPU-accelerated training.
 
-- [ ] **1.1 Python & CUDA Setup**
-  - Install supported Python version (Python 3.10 or 3.11).
-  - Install PyTorch with native CUDA 12.x wheels (`cu121`).
-  - Install required libraries: `torchvision`, `pysodmetrics`, `opencv-python`, `pillow`, `matplotlib`, `scipy`, `timm`, `tqdm`.
-- [ ] **1.2 SINet-V2 Core Modules**
-  - Integrate `lib/` (`Network_Res2Net_GRA_NCD.py`, `Res2Net_v1b.py`) and `utils/` (`data_val.py`, `utils.py`) into the workspace.
-- [ ] **1.3 Pretrained Checkpoint Acquisition**
-  - Download / place `Net_epoch_best.pth` into `./snapshot/SINet_V2/`.
-- [ ] **1.4 CUDA Sanity Check**
-  - Update device mappings in [`MyTesting.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/MyTesting.py) to `cuda`.
-  - Run a 1-minute forward pass sanity test on the RTX 4050 to confirm zero CUDA OOM errors.
+- [x] **1.1 Python & CUDA Setup**
+  - Installed supported Python version (Python 3.11.9).
+  - Created isolated `.venv` environment.
+  - Installed PyTorch 2.5.1 with native CUDA 12.1 support (`cu121`).
+  - Installed required libraries: `torchvision`, `pysodmetrics`, `opencv-python`, `pillow`, `matplotlib`, `scipy`, `timm`, `tqdm`.
+  - Verified CUDA detection: **NVIDIA GeForce RTX 4050 Laptop GPU (6 GB VRAM)** active.
+- [x] **1.2 SINet-V2 Core Modules**
+  - Integrated `lib/` (`Network_Res2Net_GRA_NCD.py`, `Res2Net_v1b.py`) and `utils/` (`data_val.py`, `utils.py`) into the workspace.
+  - Created zero-copy NTFS directory junctions for `Dataset/TestDataset` and `Dataset/TrainValDataset`.
+- [x] **1.3 Pretrained Checkpoint Acquisition**
+  - Staged valid `Net_epoch_best.pth` (103.31 MB, 880 parameter tensors) into [`./snapshot/SINet_V2/`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/snapshot/SINet_V2).
+- [x] **1.4 CUDA Sanity Check**
+  - Updated device mappings in [`MyTesting.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/MyTesting.py) to dynamic CUDA detection (`cuda` on RTX 4050).
+  - Executed full 580-image inference on the RTX 4050 GPU in seconds with zero OOM errors.
+  - Verified PySODMetrics baseline reproduction ($S_\alpha$: `0.7647`, $E_\phi$: `0.8061`, $F_\beta^w$: `0.6037`, MAE: `0.0593`).
 
 ---
 
