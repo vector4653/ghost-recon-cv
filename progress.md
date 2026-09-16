@@ -1,0 +1,149 @@
+# Ghost-Recon-CV: Project Progress & Execution Roadmap
+**Replication & Extension of Hwang & Ma (2024) — Camouflaged Object Detection (COD) with SINet-V2**
+
+---
+
+## 📌 Executive Summary
+This project investigates military camouflaged target segmentation using deep learning. We adapt **SINet-V2** to evaluate domain transfer between natural camouflage (animals/insects in **CAMO** and **COD10K**) and artificial military camouflage (**ACD1K** and **Military Personnel Dataset**). The ultimate goal is replicating and extending the 6-experiment combination methodology (Table 6 in Hwang & Ma, 2024) to assess how multi-domain camouflage training impacts soldier detection in tactical environments.
+
+---
+
+## 🏆 Completed Milestones
+
+### ✅ Week 1: Data Audit & Standardization
+- [x] **Data Auditing**: Verified binary pixel-level ground truth masks for **ACD1K** and **Military Personnel Dataset** (confirming true image segmentation; no SAM pseudo-labeling fallback needed).
+- [x] **Standardization**: Structured all datasets into standard `TrainValDataset/` and `TestDataset/` pairs with `Images/` and `GT/` subdirectories.
+- [x] **3:1 Split**: Partitioned military dataset into 1,498 training pairs (75%) and 580 test pairs (25%).
+- [x] **Benchmark Acquisition**: Staged CAMO (1,000 train / 250 test) and COD10K (6,000 train / 4,000 test).
+- [x] **Statistical EDA**: Generated dataset analysis reports mirroring Figures 6–8 of the baseline paper (object size distributions, foreground/negative sample ratios, image resolutions).
+
+### ✅ Week 2: Zero-Shot Baseline Evaluation
+- [x] **Pretrained Baseline**: Evaluated off-the-shelf SINet-V2 (trained on generic COD datasets) directly on the unseen Military Test split (580 images).
+- [x] **Metric Extraction**: Benchmarked via PySODMetrics:
+  - **Structure Measure ($S_\alpha$):** `0.7647` (Strong global layout recognition)
+  - **Enhanced-Alignment Measure ($E_\phi$):** `0.8061` (Solid foreground/background separation)
+  - **Weighted F-measure ($F_\beta^w$):** `0.6036` (Identifies the domain gap: blurry boundaries on uniforms)
+  - **Mean Absolute Error (MAE):** `0.0593` (Low pixel discrepancy supported by negative samples)
+- [x] **Code & Pipeline**: Committed [`MyTesting.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/MyTesting.py) and [`evaluation.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/evaluation.py) to repository.
+
+---
+
+## 🚀 Remaining Project Phases
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 1: Environment & Codebase Alignment (RTX 4050 Laptop) │
+└──────────────────────────────┬──────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 2: Week 3 - The 6 Combination Experiments (Table 6)   │
+│ (Exp M ➔ Exp C1 ➔ Exp C2 ➔ Exp MC1 ➔ Exp MC2 ➔ Exp MCC)     │
+└──────────────────────────────┬──────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 3: Qualitative Visualizations & Error Analysis        │
+└──────────────────────────────┬──────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 4: Week 4 - Report, Presentation & Interactive Demo   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🔹 Phase 1: Environment & Codebase Alignment (RTX 4050 Setup)
+**Objective**: Prepare the Windows 11 / RTX 4050 (6GB VRAM) environment for GPU-accelerated training.
+
+- [ ] **1.1 Python & CUDA Setup**
+  - Install supported Python version (Python 3.10 or 3.11).
+  - Install PyTorch with native CUDA 12.x wheels (`cu121`).
+  - Install required libraries: `torchvision`, `pysodmetrics`, `opencv-python`, `pillow`, `matplotlib`, `scipy`, `timm`, `tqdm`.
+- [ ] **1.2 SINet-V2 Core Modules**
+  - Integrate `lib/` (`Network_Res2Net_GRA_NCD.py`, `Res2Net_v1b.py`) and `utils/` (`data_val.py`, `utils.py`) into the workspace.
+- [ ] **1.3 Pretrained Checkpoint Acquisition**
+  - Download / place `Net_epoch_best.pth` into `./snapshot/SINet_V2/`.
+- [ ] **1.4 CUDA Sanity Check**
+  - Update device mappings in [`MyTesting.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/MyTesting.py) to `cuda`.
+  - Run a 1-minute forward pass sanity test on the RTX 4050 to confirm zero CUDA OOM errors.
+
+---
+
+### 🔹 Phase 2: Week 3 — The 6 Combination Experiments
+**Objective**: Replicate Table 6 of Hwang & Ma (2024). Train models across 6 distinct dataset splits and evaluate every model on the standardized **Military Test split (580 images)**.
+
+| Experiment | Training Dataset(s) | Image Pairs | Device / Batch | Epochs | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Baseline** | Off-the-shelf SINet-V2 | N/A | Apple MPS / 1 | 0 | ✅ **Done** |
+| **Exp M** | Military Only (`TrainValDataset`) | 1,498 | RTX 4050 / 8 | 30 | ⏳ Pending |
+| **Exp C1** | CAMO Only (`TrainValDataset`) | 1,000 | RTX 4050 / 8 | 30 | ⏳ Pending |
+| **Exp C2** | COD10K Only (`TrainValDataset`) | 6,000 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
+| **Exp MC1** | Military + CAMO | 2,498 | RTX 4050 / 8 | 30 | ⏳ Pending |
+| **Exp MC2** | Military + COD10K | 7,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
+| **Exp MCC** | Military + CAMO + COD10K | 8,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
+
+#### Action Items:
+- [ ] **2.1 Build Combined Dataset Loaders / Directories**
+  - Create composite directory links or list loaders for `MC1`, `MC2`, and `MCC`.
+- [ ] **2.2 Create CUDA Training Script (`MyTrain.py`)**
+  - Implement multiscale structure loss ($L = L_2 + L_3 + L_4 + L_5$).
+  - Configure Adam optimizer ($lr=1e-4$, decay at epoch 15).
+  - Add gradient clipping (`0.5`) and periodic checkpointing every 5 epochs.
+- [ ] **2.3 Run Experiment M (Military Only Fine-Tuning)**
+  - Validate training loop and loss convergence.
+  - Run inference on Military Test set and evaluate metrics via PySODMetrics.
+- [ ] **2.4 Run Nature Camouflage Baselines (Exp C1 & C2)**
+  - Train on CAMO only (Exp C1) and COD10K only (Exp C2).
+  - Evaluate on Military Test set to measure single-domain cross-transfer.
+- [ ] **2.5 Run Fusion Experiments (Exp MC1, MC2, MCC)**
+  - Train dual combinations (Military + CAMO, Military + COD10K) and full tri-domain fusion.
+  - Evaluate on Military Test set to verify if nature camouflage enhances military boundary sharpness.
+- [ ] **2.6 Compile Metric Results Matrix**
+  - Populate the full Table 6 comparison:
+    $$S_\alpha \uparrow \quad|\quad E_\phi \uparrow \quad|\quad F_\beta^w \uparrow \quad|\quad \text{MAE} \downarrow$$
+
+---
+
+### 🔹 Phase 3: Qualitative Analysis & Visualization
+**Objective**: Produce presentation-ready visual evidence and error case diagnostics.
+
+- [ ] **3.1 Visual Comparison Grid**
+  - Generate 5–8 high-resolution side-by-side comparative panels:
+    `[Original RGB] | [Ground Truth Mask] | [Zero-Shot Baseline] | [Exp M] | [Winning Combo (e.g., MCC)]`
+- [ ] **3.2 Boundary Sharpness & Contour Analysis**
+  - Demonstrate where multi-domain training eliminated boundary leakage on camouflage uniforms.
+- [ ] **3.3 Negative Sample & False Positive Diagnostics**
+  - Evaluate model behaviour on pure background distractors (~40% of military images).
+  - Quantify false alarm rates in tactical settings (connecting directly to the OODA loop decision phase).
+
+---
+
+### 🔹 Phase 4: Week 4 — Report, Presentation & Interactive Demo
+**Objective**: Final synthesis, documentation, and interactive presentation tools.
+
+- [ ] **4.1 Final Research Paper / Report**
+  - Structure according to IEEE / Hwang & Ma format:
+    1. *Introduction & Motivation* (OODA loop, tactical vision)
+    2. *Related Work* (COD evolution, SINet, MCAM)
+    3. *Dataset Architecture & Statistical Analysis* (ACD1K, Military Personnel, CAMO, COD10K)
+    4. *Methodology* (Res2Net backbone, Neighbor Connection Decoder, Group Reversal Attention)
+    5. *Experimental Setup & 6-Model Combination Ablation*
+    6. *Results & Discussion* (Comparative tables, cross-domain transfer analysis)
+    7. *Conclusion & Future Work*
+- [ ] **4.2 Interactive Inference Demo (Streamlit / Gradio)**
+  - Build a lightweight local web app to upload an arbitrary tactical image and see real-time camouflage mask overlays from the fine-tuned model.
+- [ ] **4.3 Presentation Slide Deck**
+  - Visual slides summarizing dataset statistics, combination ablation tables, and qualitative prediction overlays.
+
+---
+
+## 📊 Results Tracking Table
+
+| Experiment | Training Dataset | Test Dataset | $S_\alpha \uparrow$ | $E_\phi \uparrow$ | $F_\beta^w \uparrow$ | $\text{MAE} \downarrow$ |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **Baseline** | Off-the-shelf COD | Military Test (580) | **0.7647** | **0.8061** | **0.6036** | **0.0593** |
+| **Exp M** | Military Train (1,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp C1** | CAMO Train (1,000) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp C2** | COD10K Train (6,000) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp MC1** | Military + CAMO (2,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp MC2** | Military + COD10K (7,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp MCC** | Military + CAMO + COD10K (8,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
