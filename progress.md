@@ -78,29 +78,32 @@ This project investigates military camouflaged target segmentation using deep le
 | Experiment | Training Dataset(s) | Image Pairs | Device / Batch | Epochs | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Baseline** | Off-the-shelf SINet-V2 | N/A | Apple MPS / 1 | 0 | ✅ **Done** |
-| **Exp M** | Military Only (`TrainValDataset`) | 1,498 | RTX 4050 / 8 | 30 | ⏳ Pending |
-| **Exp C1** | CAMO Only (`TrainValDataset`) | 1,000 | RTX 4050 / 8 | 30 | ⏳ Pending |
+| **Exp M** | Military Only (`TrainValDataset`) | 1,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
+| **Exp C1** | CAMO Only (`TrainValDataset`) | 1,000 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp C2** | COD10K Only (`TrainValDataset`) | 6,000 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
-| **Exp MC1** | Military + CAMO | 2,498 | RTX 4050 / 8 | 30 | ⏳ Pending |
+| **Exp MC1** | Military + CAMO | 2,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp MC2** | Military + COD10K | 7,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
 | **Exp MCC** | Military + CAMO + COD10K | 8,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
 
 #### Action Items:
-- [ ] **2.1 Build Combined Dataset Loaders / Directories**
-  - Create composite directory links or list loaders for `MC1`, `MC2`, and `MCC`.
-- [ ] **2.2 Create CUDA Training Script (`MyTrain.py`)**
-  - Implement multiscale structure loss ($L = L_2 + L_3 + L_4 + L_5$).
-  - Configure Adam optimizer ($lr=1e-4$, decay at epoch 15).
-  - Add gradient clipping (`0.5`) and periodic checkpointing every 5 epochs.
-- [ ] **2.3 Run Experiment M (Military Only Fine-Tuning)**
-  - Validate training loop and loss convergence.
-  - Run inference on Military Test set and evaluate metrics via PySODMetrics.
+- [x] **2.1 Build Combined Dataset Loaders / Directories**
+  - Created [`utils/composite_dataloader.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/utils/composite_dataloader.py) with dynamic multi-domain loading for all 6 experiment splits (`M`, `C1`, `C2`, `MC1`, `MC2`, `MCC`).
+- [x] **2.2 Create CUDA Training Script (`MyTrain.py`)**
+  - Implemented multiscale structure loss ($L = L_g + L_5 + L_4 + L_3$, weighted BCE + weighted IoU).
+  - Configured Adam optimizer ($lr=1e-4$, decay by 0.1 at epoch 15), gradient clipping (`0.5`), periodic checkpointing every 5 epochs, and best checkpoint retention.
+  - Verified end-to-end execution on NVIDIA GeForce RTX 4050 Laptop GPU (~48s/epoch).
+  - Created automated orchestrator [`run_experiment.py`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/run_experiment.py) linking training, inference, and PySODMetrics evaluation.
+- [x] **2.3 Run Experiment M (Military Only Fine-Tuning)**
+  - Validated training loop and loss convergence (loss dropped from 7.68 to 1.76).
+  - Executed inference on Military Test set (580 images) saved to [`./res/Exp_M/`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/res/Exp_M).
+  - Benchmarked with PySODMetrics: $S_\alpha = 0.8638$, $E_\phi = 0.9046$, $F_\beta^w = 0.7718$, $\text{MAE} = 0.0348$.
 - [ ] **2.4 Run Nature Camouflage Baselines (Exp C1 & C2)**
-  - Train on CAMO only (Exp C1) and COD10K only (Exp C2).
-  - Evaluate on Military Test set to measure single-domain cross-transfer.
+  - [x] **Exp C1 (CAMO Only)**: Trained 30 epochs on 1,000 CAMO pairs. Results on Military Test (580): $S_\alpha = 0.7572$, $E_\phi = 0.8045$, $F_\beta^w = 0.5886$, $\text{MAE} = 0.0538$.
+  - [ ] **Exp C2 (COD10K Only)**: Train on COD10K only (6,000 pairs).
 - [ ] **2.5 Run Fusion Experiments (Exp MC1, MC2, MCC)**
-  - Train dual combinations (Military + CAMO, Military + COD10K) and full tri-domain fusion.
-  - Evaluate on Military Test set to verify if nature camouflage enhances military boundary sharpness.
+  - [x] **Exp MC1 (Military + CAMO)**: Trained 30 epochs on 2,498 pairs. Results on Military Test (580): $S_\alpha = 0.8675$, $E_\phi = 0.9095$, $F_\beta^w = 0.7773$, $\text{MAE} = 0.0322$ (*Surpasses Military alone across all 4 metrics!*).
+  - [ ] **Exp MC2 (Military + COD10K)**: Train dual combination on 7,498 pairs.
+  - [ ] **Exp MCC (Military + CAMO + COD10K)**: Train full tri-domain fusion on 8,498 pairs.
 - [ ] **2.6 Compile Metric Results Matrix**
   - Populate the full Table 6 comparison:
     $$S_\alpha \uparrow \quad|\quad E_\phi \uparrow \quad|\quad F_\beta^w \uparrow \quad|\quad \text{MAE} \downarrow$$
@@ -145,9 +148,9 @@ This project investigates military camouflaged target segmentation using deep le
 | Experiment | Training Dataset | Test Dataset | $S_\alpha \uparrow$ | $E_\phi \uparrow$ | $F_\beta^w \uparrow$ | $\text{MAE} \downarrow$ |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Baseline** | Off-the-shelf COD | Military Test (580) | **0.7647** | **0.8061** | **0.6036** | **0.0593** |
-| **Exp M** | Military Train (1,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
-| **Exp C1** | CAMO Train (1,000) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp M** | Military Train (1,498) | Military Test (580) | **0.8638** | **0.9046** | **0.7718** | **0.0348** |
+| **Exp C1** | CAMO Train (1,000) | Military Test (580) | **0.7572** | **0.8045** | **0.5886** | **0.0538** |
 | **Exp C2** | COD10K Train (6,000) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
-| **Exp MC1** | Military + CAMO (2,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp MC1** | Military + CAMO (2,498) | Military Test (580) | **0.8675** | **0.9095** | **0.7773** | **0.0322** |
 | **Exp MC2** | Military + COD10K (7,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
 | **Exp MCC** | Military + CAMO + COD10K (8,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
