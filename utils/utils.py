@@ -1,7 +1,5 @@
 import torch
 import numpy as np
-from thop import profile
-from thop import clever_format
 
 
 def clip_gradient(optimizer, grad_clip):

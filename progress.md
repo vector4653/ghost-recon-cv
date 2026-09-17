@@ -80,10 +80,10 @@ This project investigates military camouflaged target segmentation using deep le
 | **Baseline** | Off-the-shelf SINet-V2 | N/A | Apple MPS / 1 | 0 | ✅ **Done** |
 | **Exp M** | Military Only (`TrainValDataset`) | 1,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp C1** | CAMO Only (`TrainValDataset`) | 1,000 | RTX 4050 / 8 | 30 | ✅ **Done** |
-| **Exp C2** | COD10K Only (`TrainValDataset`) | 6,000 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
+| **Exp C2** | COD10K Only (`TrainValDataset`) | 6,000 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp MC1** | Military + CAMO | 2,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
-| **Exp MC2** | Military + COD10K | 7,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
-| **Exp MCC** | Military + CAMO + COD10K | 8,498 | RTX 4050 / 8 (or Colab) | 30 | ⏳ Pending |
+| **Exp MC2** | Military + COD10K | 7,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
+| **Exp MCC** | Military + CAMO + COD10K | 8,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
 
 #### Action Items:
 - [x] **2.1 Build Combined Dataset Loaders / Directories**
@@ -97,15 +97,15 @@ This project investigates military camouflaged target segmentation using deep le
   - Validated training loop and loss convergence (loss dropped from 7.68 to 1.76).
   - Executed inference on Military Test set (580 images) saved to [`./res/Exp_M/`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/res/Exp_M).
   - Benchmarked with PySODMetrics: $S_\alpha = 0.8638$, $E_\phi = 0.9046$, $F_\beta^w = 0.7718$, $\text{MAE} = 0.0348$.
-- [ ] **2.4 Run Nature Camouflage Baselines (Exp C1 & C2)**
+- [x] **2.4 Run Nature Camouflage Baselines (Exp C1 & C2)**
   - [x] **Exp C1 (CAMO Only)**: Trained 30 epochs on 1,000 CAMO pairs. Results on Military Test (580): $S_\alpha = 0.7572$, $E_\phi = 0.8045$, $F_\beta^w = 0.5886$, $\text{MAE} = 0.0538$.
-  - [ ] **Exp C2 (COD10K Only)**: Train on COD10K only (6,000 pairs).
-- [ ] **2.5 Run Fusion Experiments (Exp MC1, MC2, MCC)**
-  - [x] **Exp MC1 (Military + CAMO)**: Trained 30 epochs on 2,498 pairs. Results on Military Test (580): $S_\alpha = 0.8675$, $E_\phi = 0.9095$, $F_\beta^w = 0.7773$, $\text{MAE} = 0.0322$ (*Surpasses Military alone across all 4 metrics!*).
-  - [ ] **Exp MC2 (Military + COD10K)**: Train dual combination on 7,498 pairs.
-  - [ ] **Exp MCC (Military + CAMO + COD10K)**: Train full tri-domain fusion on 8,498 pairs.
-- [ ] **2.6 Compile Metric Results Matrix**
-  - Populate the full Table 6 comparison:
+  - [x] **Exp C2 (COD10K Only)**: Trained 30 epochs on 6,000 pairs. Results on Military Test (580): $S_\alpha = 0.6223$, $E_\phi = 0.6616$, $F_\beta^w = 0.3541$, $\text{MAE} = 0.1007$.
+- [x] **2.5 Run Fusion Experiments (Exp MC1, MC2, MCC)**
+  - [x] **Exp MC1 (Military + CAMO)**: Trained 30 epochs on 2,498 pairs. Results on Military Test (580): $S_\alpha = 0.8675$, $E_\phi = 0.9095$, $F_\beta^w = 0.7773$, $\text{MAE} = 0.0322$ (*Top performing model across all 4 metrics!*).
+  - [x] **Exp MC2 (Military + COD10K)**: Trained 30 epochs on 7,498 pairs. Results on Military Test (580): $S_\alpha = 0.8460$, $E_\phi = 0.8765$, $F_\beta^w = 0.7276$, $\text{MAE} = 0.0423$.
+  - [x] **Exp MCC (Military + CAMO + COD10K)**: Trained 30 epochs on 8,498 pairs. Results on Military Test (580): $S_\alpha = 0.8518$, $E_\phi = 0.8802$, $F_\beta^w = 0.7379$, $\text{MAE} = 0.0408$.
+- [x] **2.6 Compile Metric Results Matrix**
+  - Populated the full Table 6 comparison:
     $$S_\alpha \uparrow \quad|\quad E_\phi \uparrow \quad|\quad F_\beta^w \uparrow \quad|\quad \text{MAE} \downarrow$$
 
 ---
@@ -150,7 +150,7 @@ This project investigates military camouflaged target segmentation using deep le
 | **Baseline** | Off-the-shelf COD | Military Test (580) | **0.7647** | **0.8061** | **0.6036** | **0.0593** |
 | **Exp M** | Military Train (1,498) | Military Test (580) | **0.8638** | **0.9046** | **0.7718** | **0.0348** |
 | **Exp C1** | CAMO Train (1,000) | Military Test (580) | **0.7572** | **0.8045** | **0.5886** | **0.0538** |
-| **Exp C2** | COD10K Train (6,000) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp C2** | COD10K Train (6,000) | Military Test (580) | **0.6223** | **0.6616** | **0.3541** | **0.1007** |
 | **Exp MC1** | Military + CAMO (2,498) | Military Test (580) | **0.8675** | **0.9095** | **0.7773** | **0.0322** |
-| **Exp MC2** | Military + COD10K (7,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
-| **Exp MCC** | Military + CAMO + COD10K (8,498) | Military Test (580) | *Pending* | *Pending* | *Pending* | *Pending* |
+| **Exp MC2** | Military + COD10K (7,498) | Military Test (580) | **0.8460** | **0.8765** | **0.7276** | **0.0423** |
+| **Exp MCC** | Military + CAMO + COD10K (8,498) | Military Test (580) | **0.8518** | **0.8802** | **0.7379** | **0.0408** |

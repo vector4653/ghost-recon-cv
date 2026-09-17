@@ -11,6 +11,7 @@ from utils.data_val import test_dataset
 parser = argparse.ArgumentParser()
 parser.add_argument('--testsize', type=int, default=352, help='testing size')
 parser.add_argument('--pth_path', type=str, default='./snapshot/SINet_V2/Net_epoch_best.pth')
+parser.add_argument('--save_path', type=str, default='./res/SINet_V2/', help='directory to save output predictions')
 opt = parser.parse_args()
 
 # 1. Initialize the model
@@ -28,7 +29,7 @@ model.eval()
 # 4. Point directly to your standardized Military split
 image_root = './Dataset/TestDataset/Images/'
 gt_root = './Dataset/TestDataset/GT/'
-save_path = './res/SINet_V2/'
+save_path = opt.save_path if opt.save_path.endswith('/') else opt.save_path + '/'
 
 os.makedirs(save_path, exist_ok=True)
 
