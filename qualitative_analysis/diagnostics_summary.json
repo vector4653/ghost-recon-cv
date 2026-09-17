@@ -1,0 +1,37 @@
+{
+  "Baseline (Off-the-shelf)": {
+    "mean_boundary_iou": 0.23324101038837378,
+    "mean_fpr": 0.01407969359538236,
+    "mean_bg_leakage": 0.015846934543364295
+  },
+  "Exp M (Military)": {
+    "mean_boundary_iou": 0.3372284932106207,
+    "mean_fpr": 0.020180968792064147,
+    "mean_bg_leakage": 0.021275023524238768
+  },
+  "Exp C1 (CAMO)": {
+    "mean_boundary_iou": 0.22248934470840223,
+    "mean_fpr": 0.015815047626805544,
+    "mean_bg_leakage": 0.016766982993043935
+  },
+  "Exp C2 (COD10K)": {
+    "mean_boundary_iou": 0.14137730067716925,
+    "mean_fpr": 0.008108090254309764,
+    "mean_bg_leakage": 0.011372480337652528
+  },
+  "Exp MC1 (Military + CAMO - Winner)": {
+    "mean_boundary_iou": 0.34372427243455367,
+    "mean_fpr": 0.015528075169625247,
+    "mean_bg_leakage": 0.016702501749348158
+  },
+  "Exp MC2 (Military + COD10K)": {
+    "mean_boundary_iou": 0.31191845437184756,
+    "mean_fpr": 0.02187526628667565,
+    "mean_bg_leakage": 0.024510133378764905
+  },
+  "Exp MCC (Tri-Domain Fusion)": {
+    "mean_boundary_iou": 0.31986064985324775,
+    "mean_fpr": 0.019860650696918218,
+    "mean_bg_leakage": 0.022796434196529942
+  }
+}

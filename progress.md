@@ -113,14 +113,18 @@ This project investigates military camouflaged target segmentation using deep le
 ### 🔹 Phase 3: Qualitative Analysis & Visualization
 **Objective**: Produce presentation-ready visual evidence and error case diagnostics.
 
-- [ ] **3.1 Visual Comparison Grid**
-  - Generate 5–8 high-resolution side-by-side comparative panels:
-    `[Original RGB] | [Ground Truth Mask] | [Zero-Shot Baseline] | [Exp M] | [Winning Combo (e.g., MCC)]`
-- [ ] **3.2 Boundary Sharpness & Contour Analysis**
-  - Demonstrate where multi-domain training eliminated boundary leakage on camouflage uniforms.
-- [ ] **3.3 Negative Sample & False Positive Diagnostics**
-  - Evaluate model behaviour on pure background distractors (~40% of military images).
-  - Quantify false alarm rates in tactical settings (connecting directly to the OODA loop decision phase).
+- [x] **3.1 Visual Comparison Grid**
+  - Generated high-resolution side-by-side comparative panels across 6 challenging operational scenarios (snipers, woodland foliage, prone operators, multi-camo):
+    `[Original RGB] | [Ground Truth Mask] | [Zero-Shot Baseline] | [Exp M] | [Exp C1] | [Exp C2] | [Exp MC1] | [Exp MCC]`.
+  - Saved to [`qualitative_analysis/visual_comparison_grid.png`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/qualitative_analysis/visual_comparison_grid.png) and [`qualitative_analysis/tactical_overlay_comparison.png`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/qualitative_analysis/tactical_overlay_comparison.png).
+- [x] **3.2 Boundary Sharpness & Contour Analysis**
+  - Computed Boundary IoU across all 580 test images within a narrow 4-pixel contour band.
+  - Results: **Exp MC1 achieved highest boundary precision (0.3437)** compared to Exp M (0.3372), Exp MCC (0.3199), and Baseline (0.2332).
+  - Saved visualization to [`qualitative_analysis/boundary_sharpness_analysis.png`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/qualitative_analysis/boundary_sharpness_analysis.png).
+- [x] **3.3 Negative Distractor & False Positive Diagnostics**
+  - Quantified False Positive Rate (FPR) and mean leakage intensity across ~90.3% non-target tactical background pixels across all 580 test images.
+  - Multi-domain fusion (**Exp MC1**) regularized the network, dropping false alarms by ~23% compared to military-only fine-tuning (**1.55% vs 2.02% FPR**; background leakage **0.0167 vs 0.0213**).
+  - Saved diagnostic figures to [`qualitative_analysis/false_alarm_background_diagnostics.png`](file:///C:/Users/ritvi/Downloads/Apps/ghost-recon-cv/qualitative_analysis/false_alarm_background_diagnostics.png).
 
 ---
 
