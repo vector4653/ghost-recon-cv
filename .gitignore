@@ -28,6 +28,9 @@ TestDataset/
 raw_data/
 processed_data/
 
+node_modules/
+uploads/
+
 # Large image/video data files when stored loose
 *.avi
 *.mp4

@@ -1,0 +1,11 @@
+fastapi==0.103.1
+uvicorn==0.23.2
+python-multipart==0.0.6
+numpy
+opencv-python-headless
+pillow
+
+# Optional — enables real SINet-V2 inference (lib/Network_Res2Net_GRA_NCD.py).
+# Without these, app.py automatically falls back to synthetic mask generation.
+# torch
+# torchvision
