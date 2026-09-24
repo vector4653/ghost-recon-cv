@@ -8,6 +8,10 @@ const apiRoutes = require('./routes/api');
 
 dotenv.config();
 
+// Fail DB queries immediately when MongoDB is unavailable instead of buffering
+// them for 10s, so routes fall back to bundled data without stalling.
+mongoose.set('bufferCommands', false);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
