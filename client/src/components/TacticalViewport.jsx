@@ -24,6 +24,7 @@ export default function TacticalViewport() {
   const [maskImageUrl, setMaskImageUrl] = useState(null);
   const [overlayLayers, setOverlayLayers] = useState(null);
   const [telemetry, setTelemetry] = useState(null);
+  const [latencyMs, setLatencyMs] = useState(null);
   const [activeLabel, setActiveLabel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -54,6 +55,7 @@ export default function TacticalViewport() {
     currentSourceRef.current = { blob, filename, label: label || filename };
     setMaskImageUrl(null);
     setTelemetry(null);
+    setLatencyMs(null);
     setError(null);
     setSliderPos(50);
     setLoading(true);
@@ -70,6 +72,7 @@ export default function TacticalViewport() {
       setOverlayLayers(layers);
       setMaskImageUrl(layers[vizMode] || layers.both);
       setTelemetry(res.data.telemetry);
+      setLatencyMs(typeof res.data.executionTimeMs === 'number' ? res.data.executionTimeMs : null);
     } catch (err) {
       setError('Inference backend unreachable — ensure the Express server (:5050) and FastAPI sidecar (:8000) are running.');
     } finally {
@@ -136,13 +139,29 @@ export default function TacticalViewport() {
   const hasMask = Boolean(maskImageUrl);
 
 
-  const threatColor = telemetry?.threatLevel === 'CRITICAL' ? 'var(--color-tactical-crimson)' : 'var(--color-tactical-amber)';
+  const threatColors = {
+    CRITICAL: 'var(--color-tactical-crimson)',
+    ELEVATED: 'var(--color-tactical-amber)',
+    LOW: 'var(--color-tactical-emerald)',
+    NONE: 'var(--text-muted)',
+  };
+  const threatColor = threatColors[telemetry?.threatLevel] || 'var(--text-muted)';
+  const engineIsSynthetic = telemetry?.inferenceEngine === 'synthetic';
+
+  // Every row below is computed from the prediction for the image currently on
+  // screen — no dataset-level constants. Benchmark scores live on the Results page.
+  const num = (value, digits, suffix = '') =>
+    typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(digits)}${suffix}` : '—';
 
   const metrics = [
-    { label: 'Confidence', value: telemetry ? `${telemetry.confidenceScore.toFixed(1)}%` : '—' },
-    { label: 'Camouflage area', value: telemetry ? `${telemetry.camouflageAreaPercent.toFixed(1)}%` : '—' },
-    { label: 'Boundary IoU (4px)', value: telemetry?.boundaryIoU !== undefined ? telemetry.boundaryIoU.toFixed(4) : '—' },
-    { label: 'False alarm rate', value: telemetry?.fpr !== undefined ? `${telemetry.fpr.toFixed(2)}%` : '—' },
+    { label: 'Confidence', value: num(telemetry?.confidenceScore, 1, '%') },
+    { label: 'Peak confidence', value: num(telemetry?.peakConfidence, 1, '%') },
+    { label: 'Camouflage area', value: num(telemetry?.camouflageAreaPercent, 2, '%') },
+    { label: 'Regions detected', value: num(telemetry?.detectedRegions, 0) },
+    { label: 'Largest region', value: num(telemetry?.largestRegionPercent, 2, '%') },
+    { label: 'Edge definition', value: num(telemetry?.edgeDefinition, 3) },
+    { label: 'Ambiguity', value: num(telemetry?.ambiguityPercent, 2, '%') },
+    { label: 'Latency', value: num(latencyMs ?? telemetry?.inferenceMs, 0, ' ms') },
   ];
 
   return (
@@ -237,9 +256,16 @@ export default function TacticalViewport() {
             ))}
           </dl>
           {telemetry && (
-            <div className="mt-4 pt-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Threat level</span>
-              <span className="text-xs font-semibold" style={{ color: threatColor }}>{telemetry.threatLevel}</span>
+            <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <div className="flex justify-between items-center">
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Threat level</span>
+                <span className="text-xs font-semibold" style={{ color: threatColor }}>{telemetry.threatLevel}</span>
+              </div>
+              <p className="text-xs mt-2" style={{ color: engineIsSynthetic ? 'var(--color-tactical-amber)' : 'var(--text-faint)' }}>
+                {engineIsSynthetic
+                  ? 'Heuristic fallback — no checkpoint loaded'
+                  : `SINet-V2 · ${telemetry.model || selectedModel}`}
+              </p>
             </div>
           )}
         </section>
