@@ -92,6 +92,10 @@ router.post('/infer', upload.single('image'), async (req, res) => {
 
     res.json({
       maskBase64: response.data.maskBase64,
+      overlayBase64: response.data.overlayBase64,
+      outlineBase64: response.data.outlineBase64,
+      fillBase64: response.data.fillBase64,
+      rawMaskBase64: response.data.rawMaskBase64,
       telemetry: response.data.telemetry,
       executionTimeMs
     });

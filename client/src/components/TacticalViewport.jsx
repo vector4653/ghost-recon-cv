@@ -15,12 +15,14 @@ const models = [
 
 export default function TacticalViewport() {
   const [selectedModel, setSelectedModel] = useState('Exp MC1');
-  const [blendOpacity, setBlendOpacity] = useState(55);
+  const [vizMode, setVizMode] = useState('both');
+  const [blendOpacity, setBlendOpacity] = useState(85);
   const [sliderPos, setSliderPos] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
 
   const [rawImageUrl, setRawImageUrl] = useState(null);
   const [maskImageUrl, setMaskImageUrl] = useState(null);
+  const [overlayLayers, setOverlayLayers] = useState(null);
   const [telemetry, setTelemetry] = useState(null);
   const [activeLabel, setActiveLabel] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -60,14 +62,26 @@ export default function TacticalViewport() {
       formData.append('image', blob, filename);
       formData.append('model', modelKey || selectedModel);
       const res = await axios.post(`${API_BASE}/api/infer`, formData);
-      setMaskImageUrl(`data:image/png;base64,${res.data.maskBase64}`);
+      const layers = {
+        both: `data:image/png;base64,${res.data.overlayBase64 || res.data.maskBase64}`,
+        outline: `data:image/png;base64,${res.data.outlineBase64 || res.data.maskBase64}`,
+        fill: `data:image/png;base64,${res.data.fillBase64 || res.data.maskBase64}`,
+      };
+      setOverlayLayers(layers);
+      setMaskImageUrl(layers[vizMode] || layers.both);
       setTelemetry(res.data.telemetry);
     } catch (err) {
       setError('Inference backend unreachable — ensure the Express server (:5050) and FastAPI sidecar (:8000) are running.');
     } finally {
       setLoading(false);
     }
-  }, [selectedModel]);
+  }, [selectedModel, vizMode]);
+
+  useEffect(() => {
+    if (overlayLayers) {
+      setMaskImageUrl(overlayLayers[vizMode] || overlayLayers.both);
+    }
+  }, [vizMode, overlayLayers]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -141,6 +155,30 @@ export default function TacticalViewport() {
             <select id="model" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="field">
               {models.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
             </select>
+          </div>
+
+          <div>
+            <label className="eyebrow block mb-1.5">Visualization Layer</label>
+            <div className="grid grid-cols-3 gap-1">
+              {[
+                { id: 'both', label: 'Outline + Fill' },
+                { id: 'outline', label: 'Outline Only' },
+                { id: 'fill', label: 'Fill Only' },
+              ].map(mode => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setVizMode(mode.id)}
+                  className={`text-xs py-1.5 px-1 rounded transition-colors text-center ${vizMode === mode.id ? 'font-medium' : ''}`}
+                  style={{
+                    background: vizMode === mode.id ? 'var(--color-tactical-emerald)' : 'rgba(255,255,255,0.06)',
+                    color: vizMode === mode.id ? '#0b0f14' : 'var(--text-muted)'
+                  }}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -248,19 +286,11 @@ export default function TacticalViewport() {
                     className="absolute inset-0 pointer-events-none"
                     style={{ clipPath: `inset(0 0 0 ${sliderPos}%)` }}
                   >
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        backgroundColor: `rgba(16, 185, 129, ${blendOpacity / 100})`,
-                        WebkitMaskImage: `url(${maskImageUrl})`,
-                        maskImage: `url(${maskImageUrl})`,
-                        WebkitMaskSize: 'contain',
-                        maskSize: 'contain',
-                        WebkitMaskRepeat: 'no-repeat',
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskPosition: 'center',
-                        maskPosition: 'center',
-                      }}
+                    <img
+                      src={maskImageUrl}
+                      alt="Detection Overlay"
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                      style={{ opacity: blendOpacity / 100 }}
                     />
                   </div>
                 )}
@@ -288,7 +318,7 @@ export default function TacticalViewport() {
                       Original
                     </span>
                     <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--color-tactical-emerald)', zIndex: 20 }}>
-                      Mask
+                      {vizMode === 'outline' ? 'Outline Only' : vizMode === 'fill' ? 'Mask Only' : 'Detected Soldier'}
                     </span>
                   </>
                 )}

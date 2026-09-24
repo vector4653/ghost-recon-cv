@@ -88,7 +88,7 @@ def get_model(model_key: str):
 
     try:
         net = Network(imagenet_pretrained=False)
-        net.load_state_dict(torch.load(str(pth_path), map_location="cpu"))
+        net.load_state_dict(torch.load(str(pth_path), map_location="cpu", weights_only=False))
         net.to(DEVICE)
         net.eval()
         _model_cache[model_key] = net
@@ -134,6 +134,46 @@ def run_synthetic_inference(img_bgr: np.ndarray, model_key: str) -> np.ndarray:
     return mask
 
 
+def generate_tactical_overlays(mask: np.ndarray, color_bgr=(16, 185, 129)):
+    """
+    Given a single-channel uint8 mask (0..255):
+    Produces:
+    1. combined: RGBA image with semi-transparent fill + sharp glowing contour outline.
+    2. outline: RGBA image with ONLY the sharp glowing contour outline.
+    3. fill: RGBA image with ONLY the semi-transparent fill.
+    4. raw: Grayscale mask.
+    """
+    h, w = mask.shape[:2]
+
+    # Binary threshold for contour extraction
+    _, thresh = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # 1. Fill layer (RGBA)
+    fill_rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    fill_rgba[thresh > 0] = [color_bgr[0], color_bgr[1], color_bgr[2], 160]
+
+    # 2. Outline layer (RGBA)
+    outline_rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    # Bright tactical green (50, 255, 120, 255) with 2px contour
+    cv2.drawContours(outline_rgba, contours, -1, (50, 255, 120, 255), 2)
+
+    # 3. Combined overlay (fill + outline)
+    combined_rgba = fill_rgba.copy()
+    cv2.drawContours(combined_rgba, contours, -1, (50, 255, 120, 255), 2)
+
+    def to_b64(img):
+        _, buf = cv2.imencode(".png", img)
+        return base64.b64encode(buf).decode("utf-8")
+
+    return {
+        "combined": to_b64(combined_rgba),
+        "outline": to_b64(outline_rgba),
+        "fill": to_b64(fill_rgba),
+        "raw": to_b64(mask)
+    }
+
+
 @app.get("/health")
 def health_check():
     return {
@@ -169,8 +209,7 @@ async def predict(image: UploadFile = File(...), model: str = Form("Exp MC1")):
         mask = run_synthetic_inference(img, model_key)
         engine = "synthetic"
 
-    _, buffer = cv2.imencode(".png", mask)
-    mask_b64 = base64.b64encode(buffer).decode("utf-8")
+    overlays = generate_tactical_overlays(mask)
 
     camouflage_area = float(np.sum(mask > 128) / (h * w) * 100)
     confidence = round(((metrics["sAlpha"] + metrics["ePhi"]) / 2) * 100, 1)
@@ -183,7 +222,11 @@ async def predict(image: UploadFile = File(...), model: str = Form("Exp MC1")):
         threat_level = "LOW"
 
     return {
-        "maskBase64": mask_b64,
+        "maskBase64": overlays["combined"],
+        "overlayBase64": overlays["combined"],
+        "outlineBase64": overlays["outline"],
+        "fillBase64": overlays["fill"],
+        "rawMaskBase64": overlays["raw"],
         "telemetry": {
             "camouflageAreaPercent": round(camouflage_area, 2),
             "confidenceScore": confidence,
