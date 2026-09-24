@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import {
-  Target, Upload, Activity, ShieldAlert, Sliders, Play, Camera,
-  Loader2, GripVertical, AlertTriangle, MapPin
-} from 'lucide-react';
+import { Upload, ImageIcon, Loader2, GripVertical, AlertTriangle } from 'lucide-react';
 import { API_BASE } from '../config';
 
 const models = [
@@ -11,7 +8,7 @@ const models = [
   { key: 'Exp M', label: 'Exp M (Military)' },
   { key: 'Exp C1', label: 'Exp C1 (CAMO)' },
   { key: 'Exp C2', label: 'Exp C2 (COD10K)' },
-  { key: 'Exp MC1', label: 'Exp MC1 (Winner)' },
+  { key: 'Exp MC1', label: 'Exp MC1 (Military + CAMO) — best' },
   { key: 'Exp MC2', label: 'Exp MC2 (Military + COD10K)' },
   { key: 'Exp MCC', label: 'Exp MCC (Tri-Domain Fusion)' },
 ];
@@ -66,7 +63,7 @@ export default function TacticalViewport() {
       setMaskImageUrl(`data:image/png;base64,${res.data.maskBase64}`);
       setTelemetry(res.data.telemetry);
     } catch (err) {
-      setError('Inference backend unreachable — ensure the Express server (:5000) and FastAPI sidecar (:8000) are running.');
+      setError('Inference backend unreachable — ensure the Express server (:5050) and FastAPI sidecar (:8000) are running.');
     } finally {
       setLoading(false);
     }
@@ -124,176 +121,124 @@ export default function TacticalViewport() {
   const hasImage = Boolean(rawImageUrl);
   const hasMask = Boolean(maskImageUrl);
 
+
   const threatColor = telemetry?.threatLevel === 'CRITICAL' ? 'var(--color-tactical-crimson)' : 'var(--color-tactical-amber)';
 
+  const metrics = [
+    { label: 'Confidence', value: telemetry ? `${telemetry.confidenceScore.toFixed(1)}%` : '—' },
+    { label: 'Camouflage area', value: telemetry ? `${telemetry.camouflageAreaPercent.toFixed(1)}%` : '—' },
+    { label: 'Boundary IoU (4px)', value: telemetry?.boundaryIoU !== undefined ? telemetry.boundaryIoU.toFixed(4) : '—' },
+    { label: 'False alarm rate', value: telemetry?.fpr !== undefined ? `${telemetry.fpr.toFixed(2)}%` : '—' },
+  ];
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-6" style={{ minHeight: 'calc(100vh - 100px)' }}>
-      {/* Left Sidebar */}
-      <div className="w-full lg:w-72 flex flex-col gap-5">
-
-        {/* Operational Parameters */}
-        <div className="glass-panel p-5 relative overflow-hidden">
-          <div className="scanline"></div>
-          <h2 className="flex items-center gap-2 font-bold mb-4 uppercase tracking-wider text-sm" style={{ color: 'var(--color-tactical-emerald)' }}>
-            <Target className="w-4 h-4" /> Operational Parameters
-          </h2>
-
-          <div className="mb-5">
-            <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#94a3b8' }}>Model Selection</label>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full text-sm rounded p-2 outline-none"
-              style={{
-                backgroundColor: '#0a0d12',
-                border: '1px solid #334155',
-                color: '#e2e8f0',
-              }}
-            >
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Sidebar */}
+      <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-4">
+        <section className="panel p-4 flex flex-col gap-4">
+          <div>
+            <label htmlFor="model" className="eyebrow block mb-1.5">Model</label>
+            <select id="model" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="field">
               {models.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
             </select>
           </div>
 
-          <div className="mb-5">
-            <label className="flex justify-between text-xs uppercase tracking-widest mb-2">
-              <span style={{ color: '#94a3b8' }}>Mask Opacity</span>
-              <span style={{ color: 'var(--color-tactical-cyan)' }}>{blendOpacity}%</span>
+          <div>
+            <label htmlFor="opacity" className="flex justify-between mb-1.5">
+              <span className="eyebrow">Mask opacity</span>
+              <span className="num text-xs" style={{ color: 'var(--text-muted)' }}>{blendOpacity}%</span>
             </label>
             <input
+              id="opacity"
               type="range" min="0" max="100"
               value={blendOpacity}
               onChange={(e) => setBlendOpacity(Number(e.target.value))}
               className="w-full"
-              style={{ accentColor: 'var(--color-tactical-cyan)' }}
+              style={{ accentColor: 'var(--color-tactical-emerald)' }}
             />
           </div>
 
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full text-sm uppercase tracking-wider py-3 rounded flex justify-center items-center gap-2 transition-colors"
-            style={{ background: '#1e293b', border: '1px solid #334155', color: '#94a3b8' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#273449'}
-            onMouseLeave={e => e.currentTarget.style.background = '#1e293b'}
-          >
-            <Upload className="w-4 h-4" /> Upload Tactical Feed
+          <button onClick={() => fileInputRef.current?.click()} className="btn w-full">
+            <Upload className="w-4 h-4" /> Upload image
           </button>
 
-          {/* Preset Scenarios */}
-          <div className="mt-5">
-            <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#94a3b8' }}>Preset Scenarios</label>
+          <div>
+            <p className="eyebrow mb-1.5">Sample images</p>
             {presets.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {presets.map((p) => (
                   <button
                     key={p.filename}
                     onClick={() => handlePresetClick(p)}
-                    className="text-left px-2 py-2 rounded text-xs transition-colors flex items-center gap-1.5"
-                    style={{
-                      background: activeLabel === p.label ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.3)',
-                      border: `1px solid ${activeLabel === p.label ? 'rgba(16,185,129,0.4)' : '#1e293b'}`,
-                      color: activeLabel === p.label ? 'var(--color-tactical-emerald)' : '#94a3b8',
-                    }}
+                    className="chip"
+                    aria-pressed={activeLabel === p.label}
                   >
-                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{p.label}</span>
+                    {p.label}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="rounded p-2.5 flex items-start gap-2" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1e293b' }}>
-                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#475569' }} />
-                <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
-                  {datasetMounted === false
-                    ? 'Dataset mount not found. Presets require ./Dataset/TestDataset/Images on the server.'
-                    : 'Loading presets…'}
-                </p>
-              </div>
+              <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                {datasetMounted === false
+                  ? 'No samples found. Add images to ./Dataset/TestDataset/Images on the server.'
+                  : 'Loading samples…'}
+              </p>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Live Telemetry */}
-        <div className="glass-panel p-5 flex-grow">
-          <h2 className="flex items-center gap-2 font-bold mb-4 uppercase tracking-wider text-sm" style={{ color: 'var(--color-tactical-amber)' }}>
-            <Activity className="w-4 h-4" /> Live Telemetry
-          </h2>
-
-          <div className="space-y-3">
-            {[
-              { label: 'Detection Confidence', value: telemetry ? `${telemetry.confidenceScore.toFixed(1)}%` : '—', color: 'var(--color-tactical-emerald)' },
-              { label: 'Camouflage Area', value: telemetry ? `${telemetry.camouflageAreaPercent.toFixed(1)}%` : '—', color: '#e2e8f0' },
-              { label: 'Boundary IoU (4px)', value: telemetry?.boundaryIoU !== undefined ? telemetry.boundaryIoU.toFixed(4) : '—', color: 'var(--color-tactical-cyan)' },
-              { label: 'False Alarm Rate', value: telemetry?.fpr !== undefined ? `${telemetry.fpr.toFixed(2)}%` : '—', color: 'var(--color-tactical-amber)' },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="flex justify-between items-center pb-2" style={{ borderBottom: '1px solid #1e293b' }}>
-                <span className="text-xs uppercase tracking-wide" style={{ color: '#64748b' }}>{label}</span>
-                <span className="font-mono font-bold text-sm" style={{ color }}>{value}</span>
+        <section className="panel p-4">
+          <h2 className="panel-title mb-3">Results</h2>
+          <dl className="flex flex-col gap-2.5">
+            {metrics.map(({ label, value }) => (
+              <div key={label} className="flex justify-between items-baseline">
+                <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</dt>
+                <dd className="num text-sm">{value}</dd>
               </div>
             ))}
-          </div>
-
-          <div className="mt-4 rounded p-3 flex items-start gap-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
-            <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: threatColor }} />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: threatColor }}>
-                {telemetry ? `Threat Assessment — ${telemetry.threatLevel}` : 'Threat Assessment'}
-              </p>
-              <p className="text-xs leading-relaxed" style={{ color: '#cbd5e1' }}>
-                {telemetry
-                  ? `Camouflaged signature covering ${telemetry.camouflageAreaPercent.toFixed(1)}% of frame. Model confidence ${telemetry.confidenceScore.toFixed(1)}%.`
-                  : 'Awaiting visual feed — upload an image or select a preset scenario to begin inference.'}
-              </p>
+          </dl>
+          {telemetry && (
+            <div className="mt-4 pt-3 flex justify-between items-center" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Threat level</span>
+              <span className="text-xs font-semibold" style={{ color: threatColor }}>{telemetry.threatLevel}</span>
             </div>
-          </div>
-        </div>
-      </div>
+          )}
+        </section>
+      </aside>
 
-      {/* Main Viewport */}
-      <div className="glass-panel flex flex-col flex-1">
-        {/* Header bar */}
-        <div className="p-3 flex justify-between items-center" style={{ borderBottom: '1px solid #1e293b', background: 'rgba(0,0,0,0.4)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: loading ? 'var(--color-tactical-amber)' : 'var(--color-tactical-emerald)' }}></div>
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-tactical-emerald)' }}>
-              {loading ? 'Processing Uplink…' : 'Live Uplink Active'} — {models.find(m => m.key === selectedModel)?.label}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSliderPos(50)}
-              className="p-1.5 rounded transition-colors"
-              style={{ color: '#64748b' }}
-              title="Reset Curtain Slider"
-            >
-              <Sliders className="w-4 h-4" />
+      {/* Viewport */}
+      <section className="panel flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="px-4 h-11 flex justify-between items-center gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>
+            {activeLabel || 'No image loaded'}
+          </span>
+          {hasMask && (
+            <button onClick={() => setSliderPos(50)} className="text-xs shrink-0" style={{ color: 'var(--text-faint)' }}>
+              Reset slider
             </button>
-            <button className="p-1.5 rounded transition-colors" style={{ color: '#64748b' }} title="Export Frame">
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
+          )}
         </div>
 
         {error && (
-          <div className="mx-4 mt-3 rounded p-3 flex items-start gap-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
-            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-tactical-crimson)' }} />
+          <div className="mx-4 mt-4 rounded-md p-3 flex items-start gap-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--color-tactical-crimson)' }} />
             <p className="text-xs leading-relaxed" style={{ color: '#fca5a5' }}>{error}</p>
           </div>
         )}
 
-        {/* Viewport area */}
-        <div className="flex-grow flex items-center justify-center p-4" style={{ background: '#05080c' }}>
+        <div className="flex-grow flex items-center justify-center p-4">
           <div
             ref={viewportRef}
-            className="relative w-full max-w-3xl flex items-center justify-center rounded overflow-hidden select-none"
-            style={{ minHeight: 420, height: 420, border: '1px solid #1e293b', background: '#0a0d12' }}
+            className="relative w-full flex items-center justify-center rounded-md overflow-hidden select-none"
+            style={{ height: 460, background: 'var(--bg)' }}
           >
             {hasImage ? (
               <>
                 {/* Raw image (base layer, always fully visible) */}
                 <img
                   src={rawImageUrl}
-                  alt="Tactical feed"
+                  alt="Input"
                   className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                 />
 
@@ -327,69 +272,44 @@ export default function TacticalViewport() {
                     style={{ left: `${sliderPos}%`, transform: 'translateX(-50%)', zIndex: 30, cursor: 'ew-resize' }}
                     onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); }}
                   >
-                    <div className="absolute top-0 bottom-0" style={{ width: 2, background: 'var(--color-tactical-cyan)', boxShadow: '0 0 8px var(--color-tactical-cyan)' }} />
+                    <div className="absolute top-0 bottom-0" style={{ width: 2, background: '#fff', opacity: 0.8 }} />
                     <div
                       className="relative rounded-full flex items-center justify-center"
-                      style={{ width: 32, height: 32, background: '#0a0d12', border: '2px solid var(--color-tactical-cyan)', boxShadow: '0 0 12px rgba(6,182,212,0.5)' }}
+                      style={{ width: 28, height: 28, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}
                     >
-                      <GripVertical className="w-4 h-4" style={{ color: 'var(--color-tactical-cyan)' }} />
+                      <GripVertical className="w-4 h-4" style={{ color: '#0b0f14' }} />
                     </div>
                   </div>
                 )}
 
-                {/* Labels */}
-                <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide" style={{ background: 'rgba(0,0,0,0.6)', color: '#94a3b8', zIndex: 20 }}>
-                  Raw Feed
-                </div>
                 {hasMask && (
-                  <div className="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-tactical-emerald)', zIndex: 20 }}>
-                    COD Mask Overlay
-                  </div>
+                  <>
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: '#e5e7eb', zIndex: 20 }}>
+                      Original
+                    </span>
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--color-tactical-emerald)', zIndex: 20 }}>
+                      Mask
+                    </span>
+                  </>
                 )}
 
                 {loading && (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(2,4,8,0.5)', zIndex: 40 }}>
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-tactical-cyan)' }} />
-                      <span className="text-xs uppercase tracking-widest" style={{ color: '#94a3b8' }}>Running Inference…</span>
+                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(11,15,20,0.6)', zIndex: 40 }}>
+                    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Running inference…
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <>
-                {/* Corner markers */}
-                {['top-2 left-2', 'top-2 right-2', 'bottom-2 left-2', 'bottom-2 right-2'].map((pos, i) => (
-                  <div key={i} className={`absolute ${pos} w-4 h-4`}
-                    style={{
-                      borderTop: i < 2 ? '2px solid rgba(6,182,212,0.5)' : 'none',
-                      borderBottom: i >= 2 ? '2px solid rgba(6,182,212,0.5)' : 'none',
-                      borderLeft: i % 2 === 0 ? '2px solid rgba(6,182,212,0.5)' : 'none',
-                      borderRight: i % 2 === 1 ? '2px solid rgba(6,182,212,0.5)' : 'none',
-                    }}
-                  />
-                ))}
-                {/* Crosshair */}
-                <div className="absolute" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(6,182,212,0.3)' }}>
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-tactical-cyan)' }}></div>
-                  </div>
-                </div>
-                <div className="absolute" style={{ top: '50%', left: 16, width: 40, height: 1, background: 'rgba(6,182,212,0.25)' }} />
-                <div className="absolute" style={{ top: '50%', right: 16, width: 40, height: 1, background: 'rgba(6,182,212,0.25)' }} />
-                <div className="absolute" style={{ left: '50%', top: 16, width: 1, height: 40, background: 'rgba(6,182,212,0.25)' }} />
-                <div className="absolute" style={{ left: '50%', bottom: 16, width: 1, height: 40, background: 'rgba(6,182,212,0.25)' }} />
-
-                <div className="text-center" style={{ color: '#334155' }}>
-                  <Play className="w-12 h-12 mx-auto mb-3" />
-                  <p className="uppercase tracking-widest text-sm">Awaiting Visual Feed</p>
-                  <p className="text-xs mt-1" style={{ color: '#1e293b' }}>Upload an image or select a preset scenario to begin</p>
-                </div>
-              </>
+              <div className="text-center" style={{ color: 'var(--text-faint)' }}>
+                <ImageIcon className="w-10 h-10 mx-auto mb-3" strokeWidth={1.5} />
+                <p className="text-sm">Upload an image or pick a sample to run detection</p>
+              </div>
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -112,14 +112,4 @@ router.get('/history', async (req, res) => {
   }
 });
 
-router.get('/paper', (req, res) => {
-  const paperPath = path.join(__dirname, '../../paper/RESEARCH_PAPER.md');
-  if (fs.existsSync(paperPath)) {
-    const content = fs.readFileSync(paperPath, 'utf-8');
-    res.json({ content });
-  } else {
-    res.status(404).json({ error: 'Paper not found' });
-  }
-});
-
 module.exports = router;

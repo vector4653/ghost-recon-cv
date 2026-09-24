@@ -52,7 +52,7 @@ Off-the-shelf Camouflaged Object Detection (COD) models are trained almost exclu
 - 📐 **4px boundary-precision diagnostics** — not just region overlap, but contour sharpness where it matters for silhouette identification.
 - 🛰️ **Live tactical HUD** — upload an image or pick a preset scenario, drag a curtain slider to reveal the predicted mask over the raw feed, and watch telemetry update in real time.
 - 🧩 **Graceful degradation everywhere** — no MongoDB? Falls back to bundled benchmark data. No trained checkpoint or PyTorch? The inference sidecar falls back to a quality-scaled synthetic mask generator instead of crashing.
-- 📊 **Sortable results studio**, interactive diagnostics filters, and a 7-slide keyboard-navigable presentation deck — built for demoing this to another human, not just yourself.
+- 📊 **Sortable results table** and interactive diagnostics filters — built for demoing this to another human, not just yourself.
 
 ---
 
@@ -150,15 +150,13 @@ The gateway and sidecar are independently resilient: MongoDB down → bundled be
 
 ## The Platform
 
-A 5-page tactical intelligence dashboard built in React 19 + Vite + Tailwind CSS v4, styled as a military C2 HUD (deep-space dark palette, emerald/amber/cyan/crimson accents, scanline animation, glassmorphism panels):
+A 3-page dashboard built in React 19 + Vite + Tailwind CSS v4, with a minimal dark theme:
 
 | Route | Page | What it does |
 |---|---|---|
-| `/` | **HUD Viewport** | Upload a tactical image or pick a preset scenario; drag a curtain slider to reveal the predicted camouflage mask over the raw feed; live confidence, boundary IoU, and threat-level telemetry. |
-| `/table6` | **Table 6 Studio** | Full sortable metric matrix (click any column header) plus bar-chart comparisons of all 7 experiments. |
-| `/diagnostics` | **Diagnostics Viewer** | Boundary-sharpness & false-positive analysis cards, a model-by-model interactive filter, and a lightbox gallery of the qualitative evidence. |
-| `/deck` | **Slide Deck** | A 7-slide, keyboard-navigable (←/→) presentation summarizing the whole study for a defense/academic audience. |
-| `/paper` | **IEEE Paper** | Renders `paper/RESEARCH_PAPER.md` — the full 7-section write-up — directly in the platform. |
+| `/` | **Inference** | Upload an image or pick a sample; drag a curtain slider to reveal the predicted camouflage mask over the raw feed; live confidence, boundary IoU, and threat-level telemetry. |
+| `/table6` | **Results** | Full sortable metric matrix (click any column header) plus bar-chart comparisons of all 7 experiments. |
+| `/diagnostics` | **Diagnostics** | Boundary-sharpness & false-positive analysis cards, a model-by-model interactive filter, and a lightbox gallery of the qualitative evidence. |
 
 ---
 
@@ -197,14 +195,12 @@ ghost-recon-cv/
 │       ├── components/
 │       │   ├── TacticalViewport.jsx    Curtain-slider inference HUD
 │       │   ├── Table6Studio.jsx        Sortable ablation matrix + charts
-│       │   ├── DiagnosticsViewer.jsx   Boundary/FPR diagnostics + gallery
-│       │   ├── PresentationDeck.jsx    7-slide keyboard-nav deck
-│       │   └── PaperReader.jsx         Renders the IEEE paper
-│       ├── App.jsx              Router, nav, live service-status pills
+│       │   └── DiagnosticsViewer.jsx   Boundary/FPR diagnostics + gallery
+│       ├── App.jsx              Router, nav, service status
 │       └── config.js            API base URLs
 ├── server/                     Express API gateway (:5050)
 │   ├── models/                 Experiment.js, InferenceLog.js (Mongoose)
-│   ├── routes/api.js           /experiments /infer /presets /history /paper
+│   ├── routes/api.js           /experiments /infer /presets /history
 │   └── server.js
 ├── lib/                        SINet-V2 core modules
 │   ├── Network_Res2Net_GRA_NCD.py   NCD + Group Reversal Attention
@@ -277,7 +273,6 @@ python run_experiment.py --exp MC1 --epoch 30 --batchsize 8   # trains, infers, 
 | `POST` | `/api/infer` | Multipart image + `model` field → proxies to the sidecar, returns mask + telemetry |
 | `GET` | `/api/presets` | Lists available preset scenario images from the mounted Military Test split |
 | `GET` | `/api/history` | Recent inference runs |
-| `GET` | `/api/paper` | Returns the IEEE research paper as Markdown |
 
 **AI Sidecar** — `http://localhost:8000`
 

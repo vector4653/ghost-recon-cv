@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Crosshair, ShieldOff, ImageIcon, X, TrendingDown, TrendingUp } from 'lucide-react';
+import { ImageIcon, X } from 'lucide-react';
 import { API_BASE } from '../config';
 
 const diagnostics = [
@@ -42,18 +42,34 @@ const gallery = [
   },
 ];
 
-const tooltipStyle = { backgroundColor: '#0a0d12', borderColor: '#1e293b', color: '#f8fafc', fontSize: 12 };
+const tooltipStyle = { backgroundColor: '#11161d', borderColor: '#2b3542', borderRadius: 6, color: '#e5e7eb', fontSize: 12 };
+const axisTick = { fill: '#64748b', fontSize: 11 };
 
-function StatCard({ label, value, unit, color, icon: Icon, sub }) {
+function StatCard({ label, value, unit, sub }) {
   return (
-    <div className="rounded p-4 flex-1 min-w-[140px]" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1e293b' }}>
-      <div className="flex items-center gap-2 mb-1" style={{ color: '#64748b' }}>
-        {Icon && <Icon className="w-3.5 h-3.5" />}
-        <span className="text-xs uppercase tracking-widest">{label}</span>
-      </div>
-      <p className="font-mono font-bold text-2xl" style={{ color }}>{value}<span className="text-sm ml-1" style={{ color: '#475569' }}>{unit}</span></p>
-      {sub && <p className="text-xs mt-1" style={{ color: '#475569' }}>{sub}</p>}
+    <div className="rounded-md p-4 flex-1 min-w-[160px]" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <p className="num text-2xl">{value}<span className="text-sm ml-0.5" style={{ color: 'var(--text-faint)' }}>{unit}</span></p>
+      {sub && <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>{sub}</p>}
     </div>
+  );
+}
+
+function MetricChart({ dataKey, domain, unit, format }) {
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={diagnostics} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+        <CartesianGrid stroke="#1f2733" vertical={false} />
+        <XAxis dataKey="short" stroke="#2b3542" tick={axisTick} tickLine={false} />
+        <YAxis stroke="#2b3542" tick={axisTick} tickLine={false} axisLine={false} domain={domain} unit={unit} />
+        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={format} />
+        <Bar isAnimationActive={false} dataKey={dataKey} radius={[3, 3, 0, 0]}>
+          {diagnostics.map((d) => (
+            <Cell key={d.short} fill={d.winner ? '#10b981' : '#475569'} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -64,184 +80,120 @@ export default function DiagnosticsViewer() {
   const active = diagnostics.find(d => d.short === selected);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-
-      {/* Header */}
-      <div className="glass-panel p-5 mb-6">
-        <h1 className="text-xl font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--color-tactical-amber)' }}>
-          Qualitative Diagnostics & Error Analysis
-        </h1>
-        <p className="text-sm" style={{ color: '#64748b' }}>
-          Phase 3 visual evidence — boundary precision, false-alarm suppression, and cross-model failure inspection.
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Diagnostics</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Boundary precision, false alarms and visual comparisons across all models.
         </p>
       </div>
 
-      {/* Two analysis cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* Boundary Sharpness Card */}
-        <div className="glass-panel p-5">
-          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--color-tactical-cyan)' }}>
-            <Crosshair className="w-4 h-4" /> Boundary Sharpness (4px Contour IoU)
-          </h2>
-          <p className="text-xs leading-relaxed mb-4" style={{ color: '#94a3b8' }}>
-            We isolate a narrow 4-pixel band around each ground-truth contour and measure IoU only within that band —
-            a test of silhouette edge fidelity, decoupled from bulk region overlap. Sharp boundaries matter tactically:
-            a soldier's outline that bleeds into foliage is a silhouette an operator can't trust.
-            <strong style={{ color: 'var(--color-tactical-emerald)' }}> Exp MC1 leads at 0.3437</strong>, edging out
-            Exp M (0.3372) and dwarfing the off-the-shelf Baseline (0.2332) — a
-            <strong style={{ color: 'var(--color-tactical-emerald)' }}> +47.4% </strong>
-            relative gain from military-only training.
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="panel p-4">
+          <h2 className="panel-title">Boundary sharpness (4px contour IoU)</h2>
+          <p className="text-xs leading-relaxed mt-1 mb-4" style={{ color: 'var(--text-muted)' }}>
+            IoU measured only within a 4px band around each object outline. Exp MC1 leads at 0.3437,
+            +47% over the Baseline (0.2332).
           </p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={diagnostics} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="short" stroke="#334155" tick={{ fill: '#64748b', fontSize: 11 }} />
-              <YAxis stroke="#334155" tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, 0.4]} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v) => v.toFixed(4)} />
-              <Bar dataKey="boundaryIoU" radius={[3, 3, 0, 0]}>
-                {diagnostics.map((d) => (
-                  <Cell key={d.short} fill={d.winner ? '#10b981' : '#06b6d4'} fillOpacity={d.winner ? 1 : 0.55} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+          <MetricChart dataKey="boundaryIoU" domain={[0, 0.4]} format={(v) => v.toFixed(4)} />
+        </section>
 
-        {/* False Positive Card */}
-        <div className="glass-panel p-5">
-          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--color-tactical-crimson)' }}>
-            <ShieldOff className="w-4 h-4" /> False Positive & Distractor Analysis
-          </h2>
-          <p className="text-xs leading-relaxed mb-4" style={{ color: '#94a3b8' }}>
-            False alarms on background foliage and terrain clutter drive cognitive overload during the OODA loop's
-            "Orient" phase. Fusing natural camouflage (CAMO) with military data regularizes the network against
-            over-triggering: <strong style={{ color: 'var(--color-tactical-emerald)' }}>Exp MC1 cuts FPR to 1.55%</strong>,
-            a <strong style={{ color: 'var(--color-tactical-emerald)' }}>~23% reduction</strong> versus military-only
-            fine-tuning (Exp M, 2.02%), while background leakage drops from 2.13% to 1.67%.
+        <section className="panel p-4">
+          <h2 className="panel-title">False positive rate</h2>
+          <p className="text-xs leading-relaxed mt-1 mb-4" style={{ color: 'var(--text-muted)' }}>
+            Detections on background foliage and clutter. Adding CAMO data cuts FPR to 1.55% for Exp MC1,
+            about 23% lower than military-only training (Exp M, 2.02%).
           </p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={diagnostics} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="short" stroke="#334155" tick={{ fill: '#64748b', fontSize: 11 }} />
-              <YAxis stroke="#334155" tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, 2.5]} unit="%" />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${v.toFixed(2)}%`} />
-              <Bar dataKey="fpr" radius={[3, 3, 0, 0]}>
-                {diagnostics.map((d) => (
-                  <Cell key={d.short} fill={d.winner ? '#10b981' : '#ef4444'} fillOpacity={d.winner ? 1 : 0.45} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+          <MetricChart dataKey="fpr" domain={[0, 2.5]} unit="%" format={(v) => `${v.toFixed(2)}%`} />
+        </section>
       </div>
 
-      {/* Model-by-model interactive filter */}
-      <div className="glass-panel p-5 mb-6">
-        <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#94a3b8' }}>
-          Inspect Model Diagnostics
-        </h2>
-        <div className="flex flex-wrap gap-2 mb-5">
+      <section className="panel p-4">
+        <h2 className="panel-title mb-3">Compare models</h2>
+        <div className="flex flex-wrap gap-1.5 mb-4">
           {diagnostics.map((d) => (
             <button
               key={d.short}
               onClick={() => setSelected(d.short)}
-              className="px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors"
-              style={{
-                background: selected === d.short ? (d.winner ? 'rgba(16,185,129,0.15)' : 'rgba(6,182,212,0.15)') : 'rgba(0,0,0,0.3)',
-                border: `1px solid ${selected === d.short ? (d.winner ? '#10b981' : '#06b6d4') : '#1e293b'}`,
-                color: selected === d.short ? (d.winner ? '#10b981' : '#06b6d4') : '#64748b',
-              }}
+              className="chip"
+              aria-pressed={selected === d.short}
             >
-              {d.name} {d.winner && '🏆'}
+              {d.name}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           <StatCard
             label="Boundary IoU (4px)"
             value={active.boundaryIoU.toFixed(4)}
-            color="var(--color-tactical-cyan)"
-            icon={Crosshair}
             sub={active.short === 'Base' ? 'Reference' : `${active.boundaryIoU > baseline.boundaryIoU ? '+' : ''}${((active.boundaryIoU - baseline.boundaryIoU) / baseline.boundaryIoU * 100).toFixed(1)}% vs Baseline`}
           />
           <StatCard
-            label="False Positive Rate"
+            label="False positive rate"
             value={active.fpr.toFixed(2)}
             unit="%"
-            color="var(--color-tactical-crimson)"
-            icon={ShieldOff}
             sub={active.short === 'Base' ? 'Reference' : `${active.fpr > expM.fpr ? '+' : ''}${((active.fpr - expM.fpr) / expM.fpr * 100).toFixed(1)}% vs Exp M`}
           />
           <StatCard
-            label="Background Leakage"
+            label="Background leakage"
             value={active.bgLeakage.toFixed(2)}
             unit="%"
-            color="var(--color-tactical-amber)"
-            icon={active.bgLeakage <= expM.bgLeakage ? TrendingDown : TrendingUp}
           />
         </div>
-      </div>
+      </section>
 
-      {/* Visual Evidence Gallery */}
-      <div className="glass-panel p-5 mb-6">
-        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#94a3b8' }}>
-          <ImageIcon className="w-4 h-4" /> Visual Evidence Gallery
-        </h2>
+      <section className="panel p-4">
+        <h2 className="panel-title mb-4">Visual comparisons</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {gallery.map((item) => (
             <button
               key={item.file}
               onClick={() => !failedImages[item.file] && setLightbox(item)}
-              className="text-left rounded overflow-hidden group"
-              style={{ background: '#05080c', border: '1px solid #1e293b' }}
+              className="text-left rounded-md overflow-hidden"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
             >
-              <div className="relative overflow-hidden" style={{ aspectRatio: '16/9', background: '#0a0d12' }}>
+              <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
                 {failedImages[item.file] ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: '#334155' }}>
-                    <ImageIcon className="w-8 h-8" />
-                    <span className="text-xs uppercase tracking-wide px-4 text-center">
-                      Asset unavailable — start the backend server on :5000
-                    </span>
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-faint)' }}>
+                    <ImageIcon className="w-8 h-8" strokeWidth={1.5} />
+                    <span className="text-xs px-4 text-center">Image unavailable. Is the backend server running?</span>
                   </div>
                 ) : (
                   <img
                     src={`${API_BASE}/artifacts/${item.file}`}
                     alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-contain" style={{ background: "#fff" }}
                     onError={() => setFailedImages((prev) => ({ ...prev, [item.file]: true }))}
                   />
                 )}
               </div>
               <div className="p-3">
-                <p className="text-sm font-bold" style={{ color: '#e2e8f0' }}>{item.title}</p>
-                <p className="text-xs mt-1 leading-relaxed" style={{ color: '#64748b' }}>{item.caption}</p>
+                <p className="text-sm font-medium">{item.title}</p>
+                <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item.caption}</p>
               </div>
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Lightbox */}
       {lightbox && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{ background: 'rgba(2,4,8,0.92)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(5,8,12,0.9)' }}
           onClick={() => setLightbox(null)}
         >
           <div className="max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3">
-              <p className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--color-tactical-cyan)' }}>{lightbox.title}</p>
-              <button onClick={() => setLightbox(null)} style={{ color: '#94a3b8' }}>
+              <p className="text-sm font-medium">{lightbox.title}</p>
+              <button onClick={() => setLightbox(null)} style={{ color: 'var(--text-muted)' }} aria-label="Close">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <img
               src={`${API_BASE}/artifacts/${lightbox.file}`}
               alt={lightbox.title}
-              className="w-full rounded"
-              style={{ border: '1px solid #1e293b' }}
+              className="w-full rounded-md"
             />
           </div>
         </div>
