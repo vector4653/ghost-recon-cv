@@ -1,0 +1,54 @@
+{
+  "model_key": "res2net",
+  "checkpoint_path": "./snapshot/Exp_MC1/Net_epoch_best.pth",
+  "checkpoint_size_MB": 103.44,
+  "parameters": {
+    "total_params_M": 26.9756,
+    "trainable_params_M": 26.9756,
+    "backbone_params_M": 25.7184,
+    "decoder_params_M": 1.2573,
+    "raw_total": 26975642,
+    "raw_backbone": 25718352,
+    "raw_decoder": 1257290
+  },
+  "computation": {
+    "macs_G": 12.3135,
+    "flops_G": 24.6269,
+    "convention": "FLOPs = 2 x MACs (1 Multiply-Accumulate = 2 Floating Point Operations)",
+    "thop_macs_G": 12.3135,
+    "cross_check_tool": "ptflops",
+    "cross_check_macs_G": 12.3131
+  },
+  "peak_cuda_memory_MB": 133.95,
+  "latency_gpu_fp32": {
+    "mean_ms": 28.716,
+    "std_ms": 17.008,
+    "p95_ms": 58.872,
+    "fps": 34.82,
+    "iterations": 200,
+    "warmup_iterations": 50
+  },
+  "latency_gpu_fp16": {
+    "mean_ms": 19.994,
+    "std_ms": 7.505,
+    "p95_ms": 22.525,
+    "fps": 50.02,
+    "iterations": 200,
+    "warmup_iterations": 50
+  },
+  "latency_cpu": {
+    "mean_ms": 128.914,
+    "std_ms": 4.905,
+    "p95_ms": 137.776,
+    "fps": 7.76,
+    "threads": 14,
+    "iterations": 50,
+    "warmup_iterations": 10
+  },
+  "device_info": {
+    "cuda_available": true,
+    "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+    "pytorch_version": "2.5.1+cu121",
+    "cpu_threads": 14
+  }
+}
