@@ -4,6 +4,7 @@ import axios from 'axios';
 import TacticalViewport from './components/TacticalViewport';
 import Table6Studio from './components/Table6Studio';
 import DiagnosticsViewer from './components/DiagnosticsViewer';
+import EfficiencyViewer from './components/EfficiencyViewer';
 import { Crosshair } from 'lucide-react';
 import { API_BASE, AI_BASE } from './config';
 
@@ -11,6 +12,7 @@ const navItems = [
   { path: '/', label: 'Inference' },
   { path: '/table6', label: 'Results' },
   { path: '/diagnostics', label: 'Diagnostics' },
+  { path: '/efficiency', label: 'Efficiency' },
 ];
 
 function useServiceStatus(url, intervalMs = 15000) {
@@ -93,6 +95,7 @@ function AppShell() {
             <Route path="/" element={<TacticalViewport />} />
             <Route path="/table6" element={<Table6Studio />} />
             <Route path="/diagnostics" element={<DiagnosticsViewer />} />
+            <Route path="/efficiency" element={<EfficiencyViewer />} />
           </Routes>
         </div>
       </main>

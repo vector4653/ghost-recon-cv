@@ -11,6 +11,8 @@ const models = [
   { key: 'Exp MC1', label: 'Exp MC1 (Military + CAMO) — best' },
   { key: 'Exp MC2', label: 'Exp MC2 (Military + COD10K)' },
   { key: 'Exp MCC', label: 'Exp MCC (Tri-Domain Fusion)' },
+  { key: 'MC1 GhostNet', label: 'GhostNet-SINet (MC1) — 4.6× smaller' },
+  { key: 'MC1 ShuffleNet', label: 'ShuffleNetV2-SINet (MC1) — 17× smaller' },
 ];
 
 export default function TacticalViewport() {

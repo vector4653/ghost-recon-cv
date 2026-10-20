@@ -21,6 +21,7 @@ app.use(morgan('dev'));
 
 // Static serving for qualitative analysis images
 app.use('/artifacts', express.static(path.join(__dirname, '../qualitative_analysis')));
+app.use('/efficiency-figures', express.static(path.join(__dirname, '../efficiency/figures')));
 app.use('/dataset', express.static(path.join(__dirname, '../Dataset/TestDataset/Images')));
 
 app.use('/api', apiRoutes);

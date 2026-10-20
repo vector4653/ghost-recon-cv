@@ -38,6 +38,10 @@ MODEL_METRICS = {
     "Exp MC1":  {"sAlpha": 0.8675, "ePhi": 0.9095, "fBetaW": 0.7773, "mae": 0.0322, "boundaryIoU": 0.3437, "fpr": 1.55},
     "Exp MC2":  {"sAlpha": 0.8460, "ePhi": 0.8765, "fBetaW": 0.7276, "mae": 0.0423, "boundaryIoU": 0.3119, "fpr": 2.19},
     "Exp MCC":  {"sAlpha": 0.8518, "ePhi": 0.8802, "fBetaW": 0.7379, "mae": 0.0408, "boundaryIoU": 0.3199, "fpr": 1.99},
+    "MC1 GhostNet": {"sAlpha": 0.8376, "ePhi": 0.8590, "fBetaW": 0.7078, "mae": 0.0451, "boundaryIoU": 0.2495, "fpr": 2.48},
+    "MC1 ShuffleNet": {"sAlpha": 0.8294, "ePhi": 0.8515, "fBetaW": 0.6929, "mae": 0.0472, "boundaryIoU": 0.2503, "fpr": 2.39},
+    "Exp MC1_ghostnet": {"sAlpha": 0.8376, "ePhi": 0.8590, "fBetaW": 0.7078, "mae": 0.0451, "boundaryIoU": 0.2495, "fpr": 2.48},
+    "Exp MC1_shufflenet": {"sAlpha": 0.8294, "ePhi": 0.8515, "fBetaW": 0.6929, "mae": 0.0472, "boundaryIoU": 0.2503, "fpr": 2.39},
 }
 
 # Checkpoint directory naming follows run_experiment.py: ./snapshot/Exp_{M,C1,C2,MC1,MC2,MCC}/,
@@ -50,6 +54,12 @@ CHECKPOINT_DIRS = {
     "Exp MC1": "Exp_MC1",
     "Exp MC2": "Exp_MC2",
     "Exp MCC": "Exp_MCC",
+    "MC1 GhostNet": "Exp_MC1_ghostnet",
+    "MC1 ShuffleNet": "Exp_MC1_shufflenet",
+    "Exp MC1_ghostnet": "Exp_MC1_ghostnet",
+    "Exp MC1_shufflenet": "Exp_MC1_shufflenet",
+    "ghostnet": "Exp_MC1_ghostnet",
+    "shufflenet": "Exp_MC1_shufflenet",
 }
 
 # ---------------------------------------------------------------------------
@@ -97,7 +107,14 @@ def get_model(model_key: str):
         return None
 
     try:
-        net = Network(imagenet_pretrained=False)
+        if "ghostnet" in model_key.lower():
+            from lib.Network_GhostNet_GRA_NCD import Network as GhostNetNetwork
+            net = GhostNetNetwork(imagenet_pretrained=False)
+        elif "shufflenet" in model_key.lower():
+            from lib.Network_ShuffleNetV2_GRA_NCD import Network as ShuffleNetNetwork
+            net = ShuffleNetNetwork(imagenet_pretrained=False)
+        else:
+            net = Network(imagenet_pretrained=False)
         net.load_state_dict(torch.load(str(pth_path), map_location="cpu", weights_only=False))
         net.to(DEVICE)
         net.eval()

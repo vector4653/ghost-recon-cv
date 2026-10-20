@@ -116,4 +116,49 @@ router.get('/history', async (req, res) => {
   }
 });
 
+router.get('/efficiency', (req, res) => {
+  const csvPath = path.join(__dirname, '../../efficiency/results/efficiency_table.csv');
+  if (!fs.existsSync(csvPath)) {
+    return res.status(404).json({ error: 'Efficiency results not found' });
+  }
+
+  try {
+    const raw = fs.readFileSync(csvPath, 'utf-8');
+    const lines = raw.trim().split(/\r?\n/);
+    if (lines.length < 2) {
+      return res.json([]);
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const data = lines.slice(1).map(line => {
+      const values = [];
+      let inQuotes = false;
+      let curr = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(curr.trim());
+          curr = '';
+        } else {
+          curr += char;
+        }
+      }
+      values.push(curr.trim());
+
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] !== undefined ? values[idx] : null;
+      });
+      return row;
+    });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Failed to parse efficiency table:', err);
+    res.status(500).json({ error: 'Internal server error reading efficiency results' });
+  }
+});
+
 module.exports = router;
