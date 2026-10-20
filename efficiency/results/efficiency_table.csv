@@ -1,0 +1,4 @@
+Model,Params (M),MACs (G),FLOPs (G),Size (MB),GPU FP32 (ms),GPU FP16 (ms),FPS,CPU Latency (ms),Peak VRAM (MB),S_alpha,E_phi,F_beta_w,MAE,Boundary IoU (4px),FPR (%),Param Reduction (x),MACs Reduction (x),Speedup (x),% F_beta_w Retained,F_w / GMAC,S_alpha / M Params,Lightweight Criterion
+SINet-V2 Res2Net-50 (MC1),26.9756,12.3135,24.6269,103.44,28.716,19.994,34.82,128.914,133.95,0.8675,0.9095,0.7773,0.0322,0.3437,1.55,1.0x,1.0x,1.0x,100.0%,0.063,0.032,Baseline Reference
+GhostNet-SINet (MC1),5.9163,2.2557,4.5115,23.07,13.548,16.898,73.81,57.276,38.51,0.8376,0.859,0.7078,0.0451,0.2495,2.48,4.56x,5.46x,2.12x,91.06%,0.314,0.142,NO
+ShuffleNetV2-SINet (MC1),1.5902,1.1868,2.3736,6.36,10.561,13.368,94.69,49.982,15.14,0.8294,0.8515,0.6929,0.0472,0.2503,2.39,16.96x,10.38x,2.72x,89.14%,0.584,0.522,NO
