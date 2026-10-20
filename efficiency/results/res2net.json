@@ -50,5 +50,15 @@
     "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
     "pytorch_version": "2.5.1+cu121",
     "cpu_threads": 14
+  },
+  "evaluation": {
+    "boundary_iou_4px": 0.3437,
+    "fpr_background": 0.0155,
+    "background_leakage": 0.0167,
+    "num_samples": 580,
+    "sm": 0.8675,
+    "em": 0.9095,
+    "wfm": 0.7773,
+    "mae": 0.0322
   }
 }

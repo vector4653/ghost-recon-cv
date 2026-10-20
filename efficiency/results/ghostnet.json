@@ -1,7 +1,7 @@
 {
   "model_key": "ghostnet",
-  "checkpoint_path": null,
-  "checkpoint_size_MB": 23.04,
+  "checkpoint_path": "./snapshot/Exp_MC1_ghostnet/Net_epoch_best.pth",
+  "checkpoint_size_MB": 23.07,
   "parameters": {
     "total_params_M": 5.9163,
     "trainable_params_M": 5.9163,
@@ -50,5 +50,15 @@
     "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
     "pytorch_version": "2.5.1+cu121",
     "cpu_threads": 14
+  },
+  "evaluation": {
+    "boundary_iou_4px": 0.2495,
+    "fpr_background": 0.0248,
+    "background_leakage": 0.0282,
+    "num_samples": 580,
+    "sm": 0.8376,
+    "em": 0.859,
+    "wfm": 0.7078,
+    "mae": 0.0451
   }
 }

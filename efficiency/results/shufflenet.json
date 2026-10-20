@@ -1,7 +1,7 @@
 {
   "model_key": "shufflenet",
-  "checkpoint_path": null,
-  "checkpoint_size_MB": 6.35,
+  "checkpoint_path": "./snapshot/Exp_MC1_shufflenet/Net_epoch_best.pth",
+  "checkpoint_size_MB": 6.36,
   "parameters": {
     "total_params_M": 1.5902,
     "trainable_params_M": 1.5902,
@@ -50,5 +50,15 @@
     "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
     "pytorch_version": "2.5.1+cu121",
     "cpu_threads": 14
+  },
+  "evaluation": {
+    "boundary_iou_4px": 0.2503,
+    "fpr_background": 0.0239,
+    "background_leakage": 0.0276,
+    "num_samples": 580,
+    "sm": 0.8294,
+    "em": 0.8515,
+    "wfm": 0.6929,
+    "mae": 0.0472
   }
 }
