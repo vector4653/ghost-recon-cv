@@ -20,6 +20,8 @@ EXPERIMENT_MAPPING = {
     'MC1': ['Military', 'CAMO'],
     'MC2': ['Military', 'COD10K'],
     'MCC': ['Military', 'CAMO', 'COD10K'],
+    'MC1_GHOSTNET': ['Military', 'CAMO'],
+    'MC1_SHUFFLENET': ['Military', 'CAMO'],
 }
 
 

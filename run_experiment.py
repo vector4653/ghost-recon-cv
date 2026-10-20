@@ -13,13 +13,19 @@ def run_cmd(cmd):
 
 def main():
     parser = argparse.ArgumentParser(description="Run complete Train -> Test -> Evaluate pipeline for an experiment.")
-    parser.add_argument('--exp', type=str, required=True, choices=['M', 'C1', 'C2', 'MC1', 'MC2', 'MCC'],
+    parser.add_argument('--exp', type=str, required=True, choices=['M', 'C1', 'C2', 'MC1', 'MC2', 'MCC', 'MC1_ghostnet', 'MC1_shufflenet'],
                         help='Experiment identifier (Table 6)')
     parser.add_argument('--epoch', type=int, default=30, help='Number of epochs')
     parser.add_argument('--batchsize', type=int, default=8, help='Batch size')
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--skip_train', action='store_true', help='Skip training if checkpoint already exists')
+    parser.add_argument('--backbone', type=str, default='res2net', choices=['res2net', 'ghostnet', 'shufflenet'], help='Backbone architecture')
     opt = parser.parse_args()
+
+    if 'ghostnet' in opt.exp.lower():
+        opt.backbone = 'ghostnet'
+    elif 'shufflenet' in opt.exp.lower():
+        opt.backbone = 'shufflenet'
 
     python_bin = sys.executable
     ckpt_dir = f"./snapshot/Exp_{opt.exp}/"
@@ -33,6 +39,7 @@ def main():
         train_cmd = [
             python_bin, "MyTrain.py",
             "--exp", opt.exp,
+            "--backbone", opt.backbone,
             "--epoch", str(opt.epoch),
             "--batchsize", str(opt.batchsize),
             "--lr", str(opt.lr),
@@ -43,6 +50,7 @@ def main():
     # Step 2: Inference on Military Test split (580 images)
     test_cmd = [
         python_bin, "MyTesting.py",
+        "--backbone", opt.backbone,
         "--pth_path", best_pth,
         "--save_path", res_dir
     ]

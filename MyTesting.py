@@ -12,9 +12,22 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--testsize', type=int, default=352, help='testing size')
 parser.add_argument('--pth_path', type=str, default='./snapshot/SINet_V2/Net_epoch_best.pth')
 parser.add_argument('--save_path', type=str, default='./res/SINet_V2/', help='directory to save output predictions')
+parser.add_argument('--backbone', type=str, default='res2net', choices=['res2net', 'ghostnet', 'shufflenet'], help='backbone architecture')
 opt = parser.parse_args()
 
+# Auto-infer backbone from paths if implied
+if 'ghostnet' in opt.pth_path.lower() or 'ghostnet' in opt.save_path.lower():
+    opt.backbone = 'ghostnet'
+elif 'shufflenet' in opt.pth_path.lower() or 'shufflenet' in opt.save_path.lower():
+    opt.backbone = 'shufflenet'
+
 # 1. Initialize the model
+if opt.backbone == 'res2net':
+    from lib.Network_Res2Net_GRA_NCD import Network
+elif opt.backbone == 'ghostnet':
+    from lib.Network_GhostNet_GRA_NCD import Network
+elif opt.backbone == 'shufflenet':
+    from lib.Network_ShuffleNetV2_GRA_NCD import Network
 model = Network(imagenet_pretrained=False)
 
 # 2. Map NVIDIA-trained weights to CPU first to prevent the Pickle error

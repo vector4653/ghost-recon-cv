@@ -68,7 +68,7 @@ def train(train_loader, model, optimizer, epoch, opt, loss_meter):
 
 def main():
     parser = argparse.ArgumentParser(description="SINet-V2 Multi-Domain Training (Hwang & Ma 2024 Replication)")
-    parser.add_argument('--exp', type=str, default='M', choices=['M', 'C1', 'C2', 'MC1', 'MC2', 'MCC'],
+    parser.add_argument('--exp', type=str, default='M', choices=['M', 'C1', 'C2', 'MC1', 'MC2', 'MCC', 'MC1_ghostnet', 'MC1_shufflenet'],
                         help='Experiment identifier (Table 6)')
     parser.add_argument('--epoch', type=int, default=30, help='Total training epochs')
     parser.add_argument('--lr', type=float, default=1e-4, help='Initial learning rate')
@@ -81,6 +81,7 @@ def main():
                         help='Checkpoint to initialize/fine-tune from (set to empty for ImageNet scratch)')
     parser.add_argument('--save_dir', type=str, default=None, help='Directory to save checkpoints')
     parser.add_argument('--num_workers', type=int, default=2, help='DataLoader workers')
+    parser.add_argument('--backbone', type=str, default='res2net', choices=['res2net', 'ghostnet', 'shufflenet'], help='Backbone architecture')
     opt = parser.parse_args()
 
     if opt.save_dir is None:
@@ -94,15 +95,34 @@ def main():
     print(f"  Initial LR / Decay : {opt.lr} (decay {opt.decay_rate} at epoch {opt.decay_epoch})")
     print("=================================================================")
 
+    # Auto-infer backbone if experiment name implies it
+    if 'ghostnet' in opt.exp.lower():
+        opt.backbone = 'ghostnet'
+    elif 'shufflenet' in opt.exp.lower():
+        opt.backbone = 'shufflenet'
+
+    # If lightweight backbone and load was left as default Res2Net checkpoint, reset to None
+    if opt.backbone != 'res2net' and opt.load == './snapshot/SINet_V2/Net_epoch_best.pth':
+        opt.load = None
+
     # 1. Initialize Network
-    model = Network(imagenet_pretrained=False)
+    if opt.backbone == 'res2net':
+        from lib.Network_Res2Net_GRA_NCD import Network
+        model = Network(imagenet_pretrained=False)
+    elif opt.backbone == 'ghostnet':
+        from lib.Network_GhostNet_GRA_NCD import Network
+        model = Network(imagenet_pretrained=True if not opt.load else False)
+    elif opt.backbone == 'shufflenet':
+        from lib.Network_ShuffleNetV2_GRA_NCD import Network
+        model = Network(imagenet_pretrained=True if not opt.load else False)
+
     if opt.load and os.path.exists(opt.load):
         print(f"Loading pretrained weights from: {opt.load}")
         state_dict = torch.load(opt.load, map_location='cpu')
         model.load_state_dict(state_dict)
         print("[+] Pretrained weights successfully loaded.")
     else:
-        print("Initializing model without checkpoint.")
+        print(f"Initializing {opt.backbone} model (pretrained on ImageNet).")
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
@@ -145,9 +165,15 @@ def main():
             torch.save(model.state_dict(), best_ckpt)
             print(f"  [*] New best model saved (loss: {best_loss:.4f})")
 
-        # Save loss history json
+        # Save loss history json & csv
         with open(os.path.join(opt.save_dir, "loss_history.json"), "w") as f:
             json.dump(loss_history, f, indent=2)
+        import csv
+        with open(os.path.join(opt.save_dir, "loss_history.csv"), "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["epoch", "loss"])
+            for h in loss_history:
+                writer.writerow([h['epoch'], h['loss']])
 
     total_time = time.time() - start_time
     print("=================================================================")
