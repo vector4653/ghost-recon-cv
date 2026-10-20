@@ -77,7 +77,7 @@ This project investigates military camouflaged target segmentation using deep le
 
 | Experiment | Training Dataset(s) | Image Pairs | Device / Batch | Epochs | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Baseline** | Off-the-shelf SINet-V2 | N/A | Apple MPS / 1 | 0 | ✅ **Done** |
+| **Baseline** | Off-the-shelf SINet-V2 | N/A | RTX 4050 / 1 | 0 | ✅ **Done** |
 | **Exp M** | Military Only (`TrainValDataset`) | 1,498 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp C1** | CAMO Only (`TrainValDataset`) | 1,000 | RTX 4050 / 8 | 30 | ✅ **Done** |
 | **Exp C2** | COD10K Only (`TrainValDataset`) | 6,000 | RTX 4050 / 8 | 30 | ✅ **Done** |
@@ -131,19 +131,48 @@ This project investigates military camouflaged target segmentation using deep le
 ### 🔹 Phase 4: Week 4 — Report, Presentation & Interactive Demo
 **Objective**: Final synthesis, documentation, and interactive presentation tools.
 
-- [ ] **4.1 Final Research Paper / Report**
-  - Structure according to IEEE / Hwang & Ma format:
-    1. *Introduction & Motivation* (OODA loop, tactical vision)
-    2. *Related Work* (COD evolution, SINet, MCAM)
-    3. *Dataset Architecture & Statistical Analysis* (ACD1K, Military Personnel, CAMO, COD10K)
-    4. *Methodology* (Res2Net backbone, Neighbor Connection Decoder, Group Reversal Attention)
-    5. *Experimental Setup & 6-Model Combination Ablation*
-    6. *Results & Discussion* (Comparative tables, cross-domain transfer analysis)
-    7. *Conclusion & Future Work*
-- [ ] **4.2 Interactive Inference Demo (Streamlit / Gradio)**
-  - Build a lightweight local web app to upload an arbitrary tactical image and see real-time camouflage mask overlays from the fine-tuned model.
-- [ ] **4.3 Presentation Slide Deck**
-  - Visual slides summarizing dataset statistics, combination ablation tables, and qualitative prediction overlays.
+- [x] **4.1 Final Research Paper / Report**
+  - Synthesized comprehensive report [`paper/RESEARCH_PAPER.md`](paper/RESEARCH_PAPER.md) covering OODA loop tactical vision, dataset domain analysis, combination ablation tables, and boundary diagnostics.
+- [x] **4.2 Interactive Tactical HUD & Full-Stack Demo**
+  - Built production full-stack web application:
+    - **React 18 Frontend (`client/`)**: Live tactical HUD, interactive curtain comparison slider, benchmark data explorer, diagnostics gallery.
+    - **Node.js/Express Gateway (`server/`)**: REST API, file upload pipeline, synthetic fallback telemetry generator.
+    - **FastAPI / PyTorch Microservice (`ai_service/`)**: Real-time CUDA inference sidecar with seamless synthetic fallback.
+- [x] **4.3 Presentation & Visual Assets**
+  - Generated presentation-ready assets: visual comparison grid (`qualitative_analysis/visual_comparison_grid.png`), boundary sharpness charts, and false positive diagnostics.
+
+---
+
+### 🔹 Review 3: Edge Efficiency & Lightweight Backbone Analysis
+**Objective**: Analyze model parameters, FLOPs/MACs, edge latency, and evaluate lightweight backbone variants (GhostNet and ShuffleNetV2) against Res2Net-50 on the MC1 regime.
+
+- [x] **R3.0 Codebase Reconnaissance & Protocol Definition**
+  - Inspected backbone feature maps, RFB channel requirements, checkpoint naming conventions, and training hyperparameter recipe.
+- [x] **R3.1 Standardized Efficiency Profiler (`efficiency/profile_model.py`)**
+  - Measured total/trainable params (M), backbone vs decoder breakdown.
+  - Profiled MACs and FLOPs ($FLOPs = 2 	imes MACs$) via `thop` cross-verified with `ptflops`.
+  - Benchmarked edge latency on NVIDIA GeForce RTX 4050 GPU (FP32 and FP16: 50 warmup, 200 timed iterations, CUDA sync) and CPU (14 threads: 10 warmup, 50 iterations).
+  - Measured peak CUDA memory allocation and checkpoint footprint.
+- [x] **R3.2 Lightweight Backbone Engineering**
+  - `lib/backbones/ghostnet_backbone.py`: timm `ghostnet_100` extracting 24, 40, 112, 160 channels at strides 4, 8, 16, 32.
+  - `lib/backbones/shufflenetv2_backbone.py`: torchvision `shufflenet_v2_x1_0` extracting 24, 116, 232, 464 channels at strides 4, 8, 16, 32.
+  - Implemented `lib/Network_GhostNet_GRA_NCD.py` and `lib/Network_ShuffleNetV2_GRA_NCD.py` reusing identical RFB/NCD/GRA decoders.
+  - Passed shape verification unit test (`efficiency/test_backbone_shapes.py`).
+- [x] **R3.3 Training Pipeline & MC1 Convergence**
+  - Added `--backbone {res2net,ghostnet,shufflenet}` to `MyTrain.py`, `MyTesting.py`, and `run_experiment.py`.
+  - Trained `MC1_ghostnet` for 30 epochs on 2,498 pairs -> best loss `1.9670`.
+  - Trained `MC1_shufflenet` for 30 epochs on 2,498 pairs -> best loss `2.1211`.
+- [x] **R3.4 Evaluation & Diagnostic Benchmarking**
+  - Evaluated on 580 test images via `evaluation.py` (PySODMetrics: $S_\alpha$, $E_\phi$, $F_\beta^w$, MAE).
+  - Evaluated 4px Boundary IoU and background FPR/leakage using identical qualitative analysis criteria.
+  - GhostNet: $S_\alpha=0.8376, F_\beta^w=0.7078, B\text{-IoU}=0.2495, \text{FPR}=2.48\%$.
+  - ShuffleNetV2: $S_\alpha=0.8294, F_\beta^w=0.6929, B\text{-IoU}=0.2503, \text{FPR}=2.39\%$.
+- [x] **R3.5 Efficiency Aggregation & Publication Figures**
+  - Implemented `efficiency/aggregate.py` generating `efficiency/results/efficiency_table.csv` and `.md`.
+  - Generated Pareto plot, params/MACs bar chart, GPU FP32/FP16 latency comparison, parameter decomposition chart, and 6-scenario visual comparison grid in `efficiency/figures/`.
+- [x] **R3.6 Documentation, Paper & Reproduction Automation**
+  - Updated `README.md` and `paper/RESEARCH_PAPER.md` with verified efficiency tables and takeaways.
+  - Created automated reproduction script `efficiency/run_all.ps1`.
 
 ---
 

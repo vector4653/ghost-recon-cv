@@ -55,5 +55,28 @@ We trained six distinct models (30 epochs each on an NVIDIA RTX 4050) to replica
 
 ---
 
-### VII. Conclusion & Future Work
+---
+
+### VII. Edge Efficiency & Lightweight Backbone Analysis
+In tactical environments (e.g., micro-drones, soldier-worn HUDs), computational constraints impose strict power and memory bounds. To assess the operational trade-off between architectural complexity and camouflage segmentation fidelity, we implemented and evaluated lightweight variants of SINet-V2 using **GhostNet** (`ghostnet_100`) and **ShuffleNetV2** (`shufflenet_v2_x1_0`), keeping the decoder (RFB, NCD, GRA) identical. All models were trained on the winning MC1 regime (2,498 pairs, 30 epochs) and profiled with an input resolution of $1\times 3 \times 352 \times 352$ on an NVIDIA GeForce RTX 4050 Laptop GPU and 14-thread CPU.
+
+| Model | Params (M) | MACs (G) | FLOPs (G) | Size (MB) | GPU FP32 | GPU FP16 | FPS | CPU (ms) | $S_\alpha \uparrow$ | $E_\phi \uparrow$ | $F_\beta^w \uparrow$ | MAE $\downarrow$ | B-IoU $\uparrow$ | FPR $\downarrow$ |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Res2Net-50 (MC1)** | 26.98 | 12.31 | 24.63 | 103.4 | 28.72ms | 19.99ms | 34.8 | 128.9ms | 0.8675 | 0.9095 | 0.7773 | 0.0322 | 0.3437 | 1.55% |
+| **GhostNet-SINet (MC1)** | 5.92 | 2.26 | 4.51 | 23.1 | 13.55ms | 16.90ms | 73.8 | 57.3ms | 0.8376 | 0.8590 | 0.7078 | 0.0451 | 0.2495 | 2.48% |
+| **ShuffleNetV2-SINet (MC1)** | 1.59 | 1.19 | 2.37 | 6.4 | 10.56ms | 13.37ms | 94.7 | 50.0ms | 0.8294 | 0.8515 | 0.6929 | 0.0472 | 0.2503 | 2.39% |
+
+#### Key Empirical Findings:
+1. **Parameter & Compute Compression**:
+   - GhostNet achieves a **4.56× parameter reduction** and **5.46× MAC reduction**, dropping checkpoint size from 103.4 MB to 23.1 MB while achieving 73.8 FPS (2.12× speedup).
+   - ShuffleNetV2 achieves an extreme **16.96× parameter reduction** (only 1.59M parameters total) and **10.38× MAC reduction** (1.19 GMACs), fitting within a 6.36 MB binary footprint and running at 94.7 FPS (2.72× speedup).
+2. **FLOPs vs. Latency Reality**:
+   - Although ShuffleNetV2 has 1.90× fewer MACs than GhostNet, its GPU latency improves by only 1.28× (10.56 ms vs 13.55 ms). This discrepancy is attributed to depthwise convolutions and channel shuffle operations exhibiting low arithmetic intensity and memory-access-cost bottlenecks, whereas GhostNet's point-wise linear operators maintain superior GPU cache utilization.
+3. **Detection Fidelity & Boundary Degradation**:
+   - Against our objective lightweight certification threshold ($\ge 4\times$ params & MAC reduction with $\ge 95\%$ $F_\beta^w$ retained), neither model certified formally: GhostNet retained 91.06% of $F_\beta^w$ and ShuffleNetV2 retained 89.14%.
+   - Camouflaged soldier silhouettes depend on fine-grained contextual correlations to resolve human contours against natural background textures. The compressed backbones exhibited a drop in 4px Boundary IoU from 0.3437 to ~0.250 and higher background leakage (~0.028 vs 0.0167). However, for SWaP-constrained (Size, Weight, and Power) tactical edge systems, ShuffleNetV2 provides an exceptional trade-off.
+
+---
+
+### VIII. Conclusion & Future Work
 We demonstrated that fusing natural camouflage (CAMO) with military datasets (Exp MC1) provides optimal regularization, yielding the sharpest target boundaries and lowest false alarm rates. This cross-domain synergy enhances the "Observe" phase of the OODA loop. Future work will focus on deploying this model via Edge AI for real-time UAV integration and tactical C2 dashboards.
